@@ -1,0 +1,107 @@
+<div class="login-container" [class.login-container-modal]="modalMode">
+  <div class="login-card card-surface">
+    <div class="login-logo-wrap">
+      <img src="/42bet-cropped.png" alt="42Bets" class="login-logo" />
+    </div>
+
+    <form (ngSubmit)="onLogin()">
+      <div class="form-group">
+        <input
+          class="form-input-dark form-input-slate"
+          id="username"
+          type="text"
+          [(ngModel)]="username"
+          name="username"
+          [attr.aria-label]="'LOGIN.USERNAME_ARIA' | translate"
+          [placeholder]="'LOGIN.USERNAME_PLACEHOLDER' | translate"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <input
+          class="form-input-dark form-input-slate"
+          id="password"
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          [attr.aria-label]="'LOGIN.PASSWORD_ARIA' | translate"
+          [placeholder]="'LOGIN.PASSWORD_PLACEHOLDER' | translate"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn-primary login-submit" [disabled]="loading">
+        {{ loading ? ('LOGIN.BTN_SUBMITTING' | translate) : ('LOGIN.BTN_SUBMIT' | translate) }}
+      </button>
+    </form>
+
+    <div class="resend-confirmation-box" *ngIf="showResendConfirmation">
+      <p class="resend-confirmation-title">{{ 'LOGIN.RESEND_TITLE' | translate }}</p>
+      <p class="resend-confirmation-text">{{ 'LOGIN.RESEND_TEXT' | translate }}</p>
+
+      <label for="resendEmail" class="form-label">{{ 'LOGIN.RESEND_LABEL' | translate }}</label>
+      <input
+        class="form-input-dark"
+        id="resendEmail"
+        type="email"
+        [(ngModel)]="resendEmail"
+        name="resendEmail"
+        placeholder="votre@email.com"
+      />
+
+      <button
+        type="button"
+        class="btn-primary resend-confirmation-button"
+        (click)="resendConfirmationEmail()"
+        [disabled]="resendLoading"
+      >
+        {{ resendLoading ? ('LOGIN.RESEND_SENDING' | translate) : ('LOGIN.RESEND_BTN' | translate) }}
+      </button>
+
+      <p class="resend-confirmation-feedback" *ngIf="resendMessage">{{ resendMessage }}</p>
+    </div>
+
+    <!-- OAuth2 Login Options -->
+    <div class="oauth2-divider">
+      <span>{{ 'LOGIN.OR' | translate }}</span>
+    </div>
+
+    <div class="oauth2-buttons">
+      <a [href]="oauth42Url" class="oauth-btn oauth-42" [title]="'LOGIN.OAUTH_42_TITLE' | translate" [attr.aria-label]="'LOGIN.OAUTH_42_ARIA' | translate">
+        <img
+          class="oauth-logo oauth-logo-42"
+          src="/42school.svg"
+          alt="42 logo"
+          loading="lazy"
+          decoding="async"
+        />
+      </a>
+      <a
+        [href]="oauthGithubUrl"
+        class="oauth-btn oauth-github"
+        [title]="'LOGIN.OAUTH_GITHUB_TITLE' | translate"
+        [attr.aria-label]="'LOGIN.OAUTH_GITHUB_ARIA' | translate"
+      >
+        <img
+          class="oauth-logo oauth-logo-github"
+          src="/github.svg"
+          alt="GitHub logo"
+          loading="lazy"
+          decoding="async"
+        />
+      </a>
+    </div>
+
+    <p class="forgot-password-link">
+      <a routerLink="/forgot-password" (click)="onRouteLinkClicked()">{{ 'LOGIN.FORGOT_PASSWORD' | translate }}</a>
+    </p>
+    <p class="register-link">
+      {{ 'LOGIN.NO_ACCOUNT' | translate }}
+      <a href="#" (click)="onRegisterLinkClicked($event)">{{ 'LOGIN.REGISTER_LINK' | translate }}</a>
+    </p>
+  </div>
+</div>
+
+<app-error-model [isOpen]="errorModalOpen" [message]="errorMessage" source="login" (closed)="closeErrorModal()">
+</app-error-model>

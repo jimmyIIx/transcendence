@@ -1,0 +1,74 @@
+<section class="contact-page">
+  <div class="contact-shell">
+    <header class="contact-hero">
+      <p class="contact-kicker">{{ 'CONTACT.KICKER' | translate }}</p>
+      <h1>{{ 'CONTACT.TITLE' | translate }}</h1>
+      <p class="contact-lead">
+        {{ 'CONTACT.LEAD' | translate }}
+      </p>
+    </header>
+
+    <section class="contact-cards" [attr.aria-label]="'CONTACT.CARDS_ARIA' | translate">
+      <app-ui-card class="contact-card">
+        <span class="contact-icon" aria-hidden="true">✉</span>
+        <h2>{{ 'CONTACT.EMAIL_TITLE' | translate }}</h2>
+        <p>support.42bet&#64;gmail.com</p>
+      </app-ui-card>
+
+      <app-ui-card class="contact-card">
+        <span class="contact-icon" aria-hidden="true">⚡</span>
+        <h2>{{ 'CONTACT.RESPONSE_TITLE' | translate }}</h2>
+        <p>{{ 'CONTACT.RESPONSE_TEXT' | translate }}</p>
+      </app-ui-card>
+
+      <app-ui-card class="contact-card">
+        <span class="contact-icon" aria-hidden="true">🛡</span>
+        <h2>{{ 'CONTACT.HELP_TITLE' | translate }}</h2>
+        <p>{{ 'CONTACT.HELP_TEXT' | translate }}</p>
+      </app-ui-card>
+    </section>
+
+    <section class="contact-form-wrap">
+      <form (submit)="onSubmit($event)" class="contact-form" novalidate>
+        <fieldset [disabled]="isSubmitting" class="contact-fieldset">
+          <app-ui-input
+            id="email"
+            name="email"
+            [label]="'CONTACT.FORM_EMAIL_LABEL' | translate"
+            type="email"
+            [required]="true"
+            autocomplete="email"
+            [placeholder]="'CONTACT.FORM_EMAIL_PLACEHOLDER' | translate"
+          />
+
+          <app-ui-input
+            id="subject"
+            name="subject"
+            [label]="'CONTACT.FORM_SUBJECT_LABEL' | translate"
+            type="text"
+            [required]="true"
+            [placeholder]="'CONTACT.FORM_SUBJECT_PLACEHOLDER' | translate"
+          />
+
+          <app-ui-textarea
+            id="message"
+            name="message"
+            [label]="'CONTACT.FORM_MESSAGE_LABEL' | translate"
+            [rows]="6"
+            [required]="true"
+            [placeholder]="'CONTACT.FORM_MESSAGE_PLACEHOLDER' | translate"
+          />
+        </fieldset>
+
+        <div class="contact-feedback" *ngIf="successMessage || errorMessage">
+          <p class="contact-success" *ngIf="successMessage">{{ successMessage }}</p>
+          <p class="contact-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        </div>
+
+        <app-ui-button type="submit" [disabled]="isSubmitting" [loading]="isSubmitting" [loadingText]="'CONTACT.SENDING' | translate" class="contact-submit-wrap">
+          {{ isSubmitting ? ('CONTACT.SENDING' | translate) : ('CONTACT.SEND_MESSAGE' | translate) }}
+        </app-ui-button>
+      </form>
+    </section>
+  </div>
+</section>

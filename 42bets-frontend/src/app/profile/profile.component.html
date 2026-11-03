@@ -1,0 +1,162 @@
+<div class="profile-page">
+  <div class="profile-shell">
+    <div class="profile-layout">
+      <aside class="profile-sidebar" [attr.aria-label]="'PROFILE.NAV_ARIA_LABEL' | translate">
+        <nav class="profile-nav">
+          <button
+            type="button"
+            class="profile-nav-item"
+            [class.profile-nav-item-active]="activeTab() === 'profil'"
+            (click)="selectTab('profil')"
+          >
+            <span class="profile-nav-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                <circle cx="9" cy="4.5" r="2.75" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+                <path d="M13.762,15.516c.86-.271,1.312-1.221,.947-2.045-.97-2.191-3.159-3.721-5.709-3.721s-4.739,1.53-5.709,3.721c-.365,.825,.087,1.774,.947,2.045,1.225,.386,2.846,.734,4.762,.734s3.537-.348,4.762-.734Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
+              </svg>
+            </span>
+            <span class="profile-nav-label">{{ 'PROFILE.NAV_PROFILE' | translate }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="profile-nav-item"
+            [class.profile-nav-item-active]="activeTab() === 'compte'"
+            (click)="selectTab('compte')"
+          >
+            <span class="profile-nav-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                <path d="M12.5 12C13.052 12 13.5 11.552 13.5 11C13.5 10.448 13.052 10 12.5 10C11.948 10 11.5 10.448 11.5 11C11.5 11.552 11.948 12 12.5 12Z" fill="currentColor" />
+                <path d="M2.25 4.75C2.25 3.645 3.145 2.75 4.25 2.75H12.75C13.302 2.75 13.75 3.198 13.75 3.75V4.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                <path d="M2.25 4.75V13.25C2.25 14.355 3.145 15.25 4.25 15.25H14.75C15.302 15.25 15.75 14.802 15.75 14.25V7.75C15.75 7.198 15.302 6.75 14.75 6.75H4.25C3.145 6.75 2.25 5.855 2.25 4.75Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+              </svg>
+            </span>
+            <span class="profile-nav-label">{{ 'PROFILE.NAV_ACCOUNT' | translate }}</span>
+          </button>
+        </nav>
+      </aside>
+
+      <section class="profile-main">
+        <div *ngIf="error()" class="profile-alert">{{ error() }}</div>
+
+        <ng-container *ngIf="activeTab() === 'profil'">
+          <div class="profile-group">
+            <div class="profile-row">
+              <div class="profile-row-label">
+                <span class="profile-row-title">{{ 'PROFILE.AVATAR_TITLE' | translate }}</span>
+              </div>
+              <app-ui-avatar
+                [src]="avatarUrl()"
+                [alt]="'PROFILE.AVATAR_ALT' | translate"
+                [fallback]="initials()"
+                [size]="74"
+                [background]="avatarBackground()"
+                imageClass="profile-avatar profile-avatar-img"
+                fallbackClass="profile-avatar"
+              />
+            </div>
+
+            <div class="profile-row">
+              <div class="profile-row-label">
+                <span class="profile-row-title">{{ 'PROFILE.USERNAME_LABEL' | translate }}</span>
+              </div>
+              <span class="profile-row-text">{{ username() }}</span>
+            </div>
+
+            <div class="profile-row">
+              <div class="profile-row-label">
+                <span class="profile-row-title">{{ 'PROFILE.EMAIL_LABEL' | translate }}</span>
+              </div>
+              <span class="profile-row-text">{{ email() }}</span>
+            </div>
+
+            <div class="profile-row">
+              <div class="profile-row-label">
+                <span class="profile-row-title">{{ 'PROFILE.ROLE_LABEL' | translate }}</span>
+              </div>
+              <app-ui-badge
+                [className]="'profile-badge ' + (role() === 'ADMIN' ? 'profile-badge-admin' : role() === 'MODERATOR' ? 'profile-badge-moderator' : 'profile-badge-user')"
+              >
+                {{ role() }}
+              </app-ui-badge>
+            </div>
+
+            <div class="profile-row">
+              <div class="profile-row-label">
+                <span class="profile-row-title">{{ 'PROFILE.PASSWORD_LABEL' | translate }}</span>
+              </div>
+              <div class="profile-password-block">
+                <a routerLink="/forgot-password" class="profile-forgot-link">{{ 'PROFILE.PASSWORD_CHANGE' | translate }}</a>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="activeTab() === 'compte'">
+          <div class="profile-group">
+            <div class="profile-row">
+              <div class="profile-row-label">
+                <span class="profile-row-title">{{ 'PROFILE.BALANCE_LABEL' | translate }}</span>
+              </div>
+              <span class="profile-balance">
+                <span *ngIf="!loading(); else loadingTpl">{{ (balance() ?? 0) | number: '1.2-2' }}</span>
+                <img src="/token42.png" [alt]="'PROFILE.TOKEN_ALT' | translate" class="profile-balance-icon" />
+              </span>
+            </div>
+
+            <div class="profile-row profile-wallet-row">
+              <div class="profile-row-label">
+                <span class="profile-row-title">{{ 'PROFILE.WALLET_LABEL' | translate }}</span>
+                <span class="profile-row-hint">{{ 'PROFILE.WALLET_HINT' | translate }}</span>
+              </div>
+              <div class="profile-wallet-pane">
+                <ng-container *ngIf="!walletEditMode(); else walletEditTpl">
+                  <span class="profile-row-text profile-mono profile-wallet-full">{{ walletAddress() ?? ('PROFILE.WALLET_EMPTY' | translate) }}</span>
+                  <button type="button" class="btn-ghost-hover profile-wallet-btn" (click)="startWalletEdit()">
+                    {{ walletAddress() ? ('PROFILE.WALLET_EDIT' | translate) : ('PROFILE.WALLET_SAVE_BTN' | translate) }}
+                  </button>
+                </ng-container>
+
+                <ng-template #walletEditTpl>
+                  <div class="profile-wallet-form">
+                    <input
+                      type="text"
+                      [(ngModel)]="walletInput"
+                      name="walletInput"
+                      class="profile-wallet-input"
+                      placeholder="0x..."
+                      autocomplete="off"
+                      spellcheck="false"
+                    />
+                    <div class="profile-wallet-actions">
+                      <button type="button" class="btn-primary profile-wallet-btn" [disabled]="walletSaving()" (click)="saveWalletAddress()">
+                        {{ walletSaving() ? ('PROFILE.WALLET_SAVING' | translate) : ('PROFILE.WALLET_SAVE_BTN' | translate) }}
+                      </button>
+                      <button type="button" class="btn-ghost-hover profile-wallet-btn" [disabled]="walletSaving()" (click)="cancelWalletEdit()">
+                        {{ 'PROFILE.WALLET_CANCEL' | translate }}
+                      </button>
+                    </div>
+                  </div>
+                </ng-template>
+
+                <span *ngIf="walletError()" class="profile-wallet-error">{{ walletError() }}</span>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #loadingTpl>
+          <span class="profile-skeleton">…</span>
+        </ng-template>
+      </section>
+    </div>
+  </div>
+</div>
+
+<app-success-modal
+  [isOpen]="walletSuccessModalOpen()"
+  [message]="walletSuccessMessage()"
+  source="auto"
+  [flatBackdrop]="true"
+  (closed)="closeWalletSuccessModal()"
+></app-success-modal>

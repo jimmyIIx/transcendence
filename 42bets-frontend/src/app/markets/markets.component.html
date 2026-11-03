@@ -1,0 +1,147 @@
+<section class="mk-page">
+  <div class="mk-top" *ngIf="currentFeatured() as m">
+    <section class="mk-featured">
+      <article class="mk-hero">
+        <a class="mk-hero-main" [routerLink]="['/markets', m.id]">
+          <div class="mk-hero-top">
+            <span class="mk-hero-avatar" [style.background]="avatarGradient(m.id)" aria-hidden="true">{{ categoryEmoji(m.category) }}</span>
+            <div class="mk-hero-heading">
+              <h3 class="mk-hero-question">{{ m | marketQuestion }}</h3>
+            </div>
+          </div>
+
+          <div class="mk-hero-chart" *ngIf="heroChart() as chart" [style.--hero-chart-color]="heroChartColor()">
+            <svg viewBox="0 0 500 120" preserveAspectRatio="none" role="img" [attr.aria-label]="'MARKETS.HERO_CHART_ARIA' | translate">
+              <defs>
+                <linearGradient id="mk-hero-area" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--hero-chart-color)" stop-opacity="0.28" />
+                  <stop offset="100%" stop-color="var(--hero-chart-color)" stop-opacity="0.01" />
+                </linearGradient>
+              </defs>
+              <path [attr.d]="chart.area" fill="url(#mk-hero-area)" />
+              <path [attr.d]="chart.line" fill="none" stroke="var(--hero-chart-color)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+            </svg>
+          </div>
+        </a>
+
+        <div class="mk-actions mk-hero-actions">
+          <a class="mk-yes" [routerLink]="['/markets', m.id]" [queryParams]="{ side: 'YES' }">
+            {{ 'MARKETS.YES' | translate }} · {{ yesPct(m) | number: '1.0-0' }}%
+          </a>
+          <a class="mk-no" [routerLink]="['/markets', m.id]" [queryParams]="{ side: 'NO' }">
+            {{ 'MARKETS.NO' | translate }} · {{ noPct(m) | number: '1.0-0' }}%
+          </a>
+        </div>
+
+        <div class="mk-hero-foot">
+          <span class="mk-vol">{{ volume(m) | number: '1.0-0' }}<img src="/token42.png" [attr.alt]="'MARKETS.TOKEN_ALT' | translate" class="mk-coin" /></span>
+          <span>{{ m.openOrderCount }} {{ 'MARKETS.ORDERS_SUFFIX' | translate }}</span>
+          <span *ngIf="m.endDate">{{ m.endDate | date:'dd/MM/yy' }}</span>
+        </div>
+
+        <div class="mk-hero-controls" *ngIf="featuredMarkets().length > 1">
+          <button type="button" class="mk-nav-btn" (click)="prevFeatured()" [attr.aria-label]="'MARKETS.FEATURED_PREV_ARIA' | translate">
+            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+              <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div class="mk-dots">
+            <button
+              type="button"
+              class="mk-dot"
+              *ngFor="let f of featuredMarkets(); let i = index"
+              [class.mk-dot-active]="i === featuredIndex()"
+              (click)="goFeatured(i)"
+              [attr.aria-label]="'MARKETS.FEATURED_DOT_ARIA' | translate: { index: i + 1 }"
+            ></button>
+          </div>
+          <button type="button" class="mk-nav-btn" (click)="nextFeatured()" [attr.aria-label]="'MARKETS.FEATURED_NEXT_ARIA' | translate">
+            <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+              <path d="M7.5 4.5 13 10l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <aside class="mk-aside">
+      <a class="mk-promo" routerLink="/dashboard">
+        <span class="mk-promo-icon">
+          <img src="/token42.png" [attr.alt]="'MARKETS.PROMO_TOKEN_ALT' | translate" />
+        </span>
+        <span class="mk-promo-text">
+          <span class="mk-promo-title">{{ 'MARKETS.PROMO_TITLE' | translate }}</span>
+          <span class="mk-promo-sub">{{ 'MARKETS.PROMO_SUB' | translate }}</span>
+        </span>
+        <span class="mk-promo-cta">{{ 'MARKETS.PROMO_CTA' | translate }}</span>
+      </a>
+
+      <div class="mk-popular">
+        <h2 class="mk-popular-title">{{ 'MARKETS.POPULAR_TITLE' | translate }}</h2>
+        <ol class="mk-popular-list">
+          <li *ngFor="let p of popularMarkets(); let i = index">
+            <a class="mk-popular-item" [routerLink]="['/markets', p.id]">
+              <span class="mk-popular-rank">{{ i + 1 }}</span>
+              <span class="mk-popular-avatar" [style.background]="avatarGradient(p.id)" aria-hidden="true">{{ categoryEmoji(p.category) }}</span>
+              <span class="mk-popular-q">{{ p | marketQuestion }}</span>
+              <span class="mk-popular-pct">{{ yesPct(p) | number: '1.0-0' }}%</span>
+            </a>
+          </li>
+        </ol>
+      </div>
+    </aside>
+  </div>
+
+  <div class="mk-grid" *ngIf="filteredMarkets().length > 0; else emptyState">
+    <article
+      class="mk-card"
+      *ngFor="let market of filteredMarkets(); trackBy: trackByMarket"
+    >
+      <a class="mk-card-head" [routerLink]="['/markets', market.id]">
+          <span class="mk-avatar" [style.background]="avatarGradient(market.id)" aria-hidden="true">{{ categoryEmoji(market.category) }}</span>
+        <h3 class="mk-question">{{ market | marketQuestion }}</h3>
+        <div class="mk-gauge" [class.mk-gauge-no]="!leadIsYes(market)" aria-hidden="true">
+          <svg viewBox="0 0 36 36">
+            <circle class="mk-gauge-bg" cx="18" cy="18" r="15.5" pathLength="100" />
+            <circle class="mk-gauge-fg" cx="18" cy="18" r="15.5" pathLength="100" [attr.stroke-dasharray]="leadPct(market) + ' ' + (100 - leadPct(market))" />
+          </svg>
+          <div class="mk-gauge-text">
+            <span class="mk-gauge-pct">{{ leadPct(market) | number: '1.0-0' }}%</span>
+            <span class="mk-gauge-label">{{ (leadIsYes(market) ? 'MARKETS.YES' : 'MARKETS.NO') | translate }}</span>
+          </div>
+        </div>
+      </a>
+
+      <div class="mk-card-actions">
+        <a class="mk-yes" [routerLink]="['/markets', market.id]" [queryParams]="{ side: 'YES' }">
+          <span class="mk-btn-label">{{ 'MARKETS.YES' | translate }}</span>
+          <span class="mk-btn-pct">{{ yesPct(market) | number: '1.0-0' }}%</span>
+        </a>
+        <a class="mk-no" [routerLink]="['/markets', market.id]" [queryParams]="{ side: 'NO' }">
+          <span class="mk-btn-label">{{ 'MARKETS.NO' | translate }}</span>
+          <span class="mk-btn-pct">{{ noPct(market) | number: '1.0-0' }}%</span>
+        </a>
+      </div>
+
+      <div class="mk-foot">
+        <span *ngIf="isNew(market)" class="mk-new">
+          <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="m11.526,5.303l-3.46-1.369L6.697.474c-.113-.286-.39-.474-.697-.474s-.584.188-.697.474l-1.369,3.46L.474,5.303c-.286.113-.474.39-.474.697s.188.584.474.697l3.46,1.369,1.369,3.46c.113.286.39.474.697.474s.584-.188.697-.474l1.368-3.46,3.46-1.369c.286-.113.474-.39.474-.697s-.188-.584-.474-.697Z" fill="currentColor" stroke-width="0" /></svg>
+          {{ 'MARKETS.NEW_BADGE' | translate }}
+        </span>
+        <span class="mk-vol">{{ volume(market) | number: '1.0-0' }}<img src="/token42.png" [attr.alt]="'MARKETS.TOKEN_ALT' | translate" class="mk-coin" /></span>
+        <span class="mk-orders">{{ market.openOrderCount }} {{ 'MARKETS.ORDERS_SUFFIX' | translate }}</span>
+        <span *ngIf="market.resolved" class="mk-resolved">{{ 'MARKETS.RESOLVED_PREFIX' | translate }}{{ market.resolvedOutcome }}</span>
+        <span *ngIf="!market.resolved && market.endDate" class="mk-date">{{ market.endDate | date:'dd/MM/yy' }}</span>
+      </div>
+    </article>
+  </div>
+</section>
+
+<ng-template #emptyState>
+  <app-ui-empty-state
+    class="empty-state"
+    [kicker]="'MARKETS.STAT_MARKETS' | translate"
+    [title]="'MARKETS.EMPTY_TITLE' | translate"
+    [text]="'MARKETS.EMPTY_TEXT' | translate"
+  />
+</ng-template>

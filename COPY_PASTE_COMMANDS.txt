@@ -1,0 +1,163 @@
+🚀 COMMANDES À COPIER-COLLER
+============================
+
+## ✅ PREMIÈRE FOIS (Build + Start)
+
+```bash
+cd c:\Users\arthu\OneDrive\Bureau\transcendence
+docker-compose up --build
+```
+
+Attendre 2-3 minutes le temps que les images se buildent.
+
+Vous verrez:
+```
+transcendence-frontend | Nginx is running...
+transcendence-backend  | Started TranscendenceApplication
+transcendence-db       | database system is ready to accept connections
+```
+
+---
+
+## ✅ DÉMARRAGES SUIVANTS (Sans rebuild)
+
+```bash
+cd c:\Users\arthu\OneDrive\Bureau\transcendence
+docker-compose up
+```
+
+---
+
+## ✅ ARRÊTER
+
+```bash
+# Ctrl+C dans le terminal docker-compose up
+# OU dans un autre terminal:
+
+docker-compose down
+```
+
+---
+
+## ✅ VÉRIFIER QUE TOUT MARCHE
+
+### Terminal 1: Démarrer Docker
+```bash
+cd c:\Users\arthu\OneDrive\Bureau\transcendence
+docker-compose up --build
+```
+
+### Terminal 2: Tester
+```bash
+# Frontend charge?
+curl http://localhost:4200
+
+# Backend répond?
+curl http://localhost:8080/auth/login
+
+# BD connectée?
+docker-compose exec db psql -U transcendence_user -d transcendence -c "SELECT 1;"
+
+# Tous les services en bonne santé?
+docker-compose ps
+```
+
+---
+
+## ✅ VOIR LES LOGS
+
+```bash
+# Tous les logs
+docker-compose logs -f
+
+# Backend seulement
+docker-compose logs -f backend
+
+# Frontend seulement
+docker-compose logs -f frontend
+
+# Database seulement
+docker-compose logs -f db
+```
+
+---
+
+## ✅ SI CA NE MARCHE PAS
+
+### "docker: command not found"
+Installer: https://www.docker.com/products/docker-desktop
+
+### "Port 4200 already in use"
+```bash
+# Option 1: Trouver et tuer
+lsof -i :4200
+kill -9 <PID>
+
+# Option 2: Utiliser un autre port
+# Éditer docker-compose.yml:
+# ports: ["8000:4200"]  # Puis accéder à http://localhost:8000
+```
+
+### "Cannot connect to database"
+Attendre 10 secondes, les healthchecks confirment quand c'est prêt.
+
+### Le frontend affiche une page blanche
+```bash
+docker-compose logs frontend
+# Puis rebuild:
+docker-compose down -v
+docker-compose up --build
+```
+
+---
+
+## 📂 FICHIERS IMPORTANTS
+
+Si vous devez éditer quelque chose:
+
+```
+.env                           ← Variables d'environnement (créer depuis .env.example)
+docker-compose.yml             ← Configuration services
+transcendence/Dockerfile       ← Backend image
+42bets-frontend/Dockerfile     ← Frontend image
+42bets-frontend/nginx.conf     ← Nginx proxy config
+```
+
+---
+
+## 📚 DOCUMENTATION
+
+```
+QUICK_START_DOCKER.md       ← Démarrage rapide (lire d'abord!)
+DOCKER_GUIDE.md             ← Guide complet
+DOCKER_SETUP_COMPLETE.txt   ← Résumé de ce setup
+FILES_CREATED_SUMMARY.txt   ← Liste des fichiers créés
+```
+
+---
+
+## 🎯 CHECKLIST D'ÉVALUATION
+
+Pour la défense:
+
+- [ ] `docker-compose up --build` marche
+- [ ] Frontend charge sur http://localhost:4200
+- [ ] Backend répond sur http://localhost:8080
+- [ ] Login/Register fonctionne
+- [ ] Database persiste les données
+- [ ] Pas d'erreur console (Chrome DevTools)
+- [ ] `docker-compose down` arrête proprement
+- [ ] `docker-compose up` redémarre sans rebuild
+- [ ] JWT_SECRET configuré (pas vide)
+
+---
+
+## 🎉 C'EST TOUT!
+
+Une seule commande et tout marche:
+
+```bash
+docker-compose up --build
+```
+
+Enjoy! 🚀

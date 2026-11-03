@@ -1,0 +1,1199 @@
+================================================================================
+                  TRANSCENDENCE - DOCUMENTATION BACKEND
+                        Spring Boot (Java)
+                        Avril 2026
+================================================================================
+
+TABLE DES MATIÈRES
+==================
+1. Vue d'ensemble du Backend
+2. Architecture Spring Boot
+3. Structure des fichiers et composants
+4. Configuration du projet
+5. Endpoints API détaillés
+6. Flux de l'authentification
+7. Installation et démarrage
+8. Base de données
+9. Sécurité et CORS
+10. Dépannage et erreurs courantes
+11. Prochaines étapes et améliorations
+12. Conventions de codage
+
+
+1. VUE D'ENSEMBLE DU BACKEND
+=============================
+
+Le backend Transcendence est une API REST construite avec Spring Boot qui gère:
+- L'authentification des utilisateurs (inscription, connexion)
+- Génération et validation des JWT tokens
+- Gestion des utilisateurs et leurs données
+- Protection des ressources via JWT
+- Communication sécurisée avec le frontend
+
+TECHNOLOGIES UTILISÉES:
+=======================
+- Spring Boot 3.x: Framework web et configuration automatique
+- Spring Security: Authentification et autorisation
+- Spring Data JPA: Accès à la base de données
+- JWT (JSON Web Tokens): Tokens d'authentification sans état
+- Maven: Gestion des dépendances et build
+- Java 17+: Langage de programmation
+- MySQL/PostgreSQL: Base de données (optionnel en dev)
+- H2 Database: Base de données en mémoire pour les tests (optionnel)
+
+
+2. ARCHITECTURE SPRING BOOT
+============================
+
+PATTERN UTILISÉ: ARCHITECTURE EN COUCHES
+────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────┐
+│           COUCHE PRÉSENTATION (REST API)            │
+│  AuthController, TestController                     │
+│  (Reçoit les requêtes HTTP)                        │
+└────────────────┬────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────┐
+│           COUCHE MÉTIER (BUSINESS LOGIC)            │
+│  AuthService, UserService, JwtUtils                 │
+│  (Logique de l'application)                        │
+└────────────────┬────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────┐
+│           COUCHE DONNÉES (DATA ACCESS)              │
+│  UserRepository, User (JPA Entity)                  │
+│  (Accès à la base de données)                      │
+└────────────────┬────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────┐
+│           BASE DE DONNÉES                           │
+│  MySQL / PostgreSQL / H2                            │
+└─────────────────────────────────────────────────────┘
+
+FLUX D'UNE REQUÊTE HTTP:
+────────────────────────
+
+Client (Frontend)
+       │
+       │ POST /auth/login
+       │ Content-Type: application/json
+       │ {"username": "Djomino06", "password": "pass123"}
+       │
+       ▼
+┌──────────────────────────┐
+│   AuthController         │
+│  - Valide la requête     │
+│  - Appelle AuthService   │
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│   AuthService            │
+│  - Cherche l'utilisateur │
+│  - Vérifie le password   │
+│  - Génère JWT            │
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│   UserRepository         │
+│  - Requête SQL à la BD   │
+│  - Retourne User object  │
+└──────────┬───────────────┘
+           │
+           ▼
+    Base de Données
+           │
+           ├──► JWT Token généré ◄──
+           │
+           ▼
+    Response HTTP 200
+    Body: eyJhbGciOiJIUzI1NiJ9...
+
+
+3. STRUCTURE DES FICHIERS ET COMPOSANTS
+========================================
+
+📁 transcendence/src/main/java/com/ft/transcendence/
+├── TranscendenceApplication.java       [★ Point d'entrée - main]
+│
+├── controller/
+│   ├── AuthController.java             [★ Endpoints /auth/login, /auth/register]
+│   └── TestController.java             [Endpoint test simple]
+│
+├── service/
+│   ├── AuthService.java                [★ Logique authentification]
+│   └── UserService.java                [Gestion des utilisateurs]
+│
+├── model/
+│   ├── User.java                       [★ Entité User (table BD)]
+│   └── Role.java                       [Énumération des rôles]
+│
+├── dto/
+│   ├── LoginRequest.java               [★ DTO pour les requêtes login]
+│   ├── RegisterRequest.java            [★ DTO pour les requêtes register]
+│   └── [Autres DTOs]
+│
+├── repository/
+│   └── UserRepository.java             [★ Accès à la table User en BD]
+│
+├── security/
+│   └── SecurityConfig.java             [★ Configuration Spring Security + CORS]
+│
+└── utils/
+    └── JwtUtils.java                   [★ Génération et validation JWT]
+
+[★] = FICHIERS ESSENTIELS
+
+
+3.1 DÉTAIL DES COMPOSANTS
+==========================
+
+A) TranscendenceApplication.java
+────────────────────────────────
+Point d'entrée de l'application.
+
+Code:
+@SpringBootApplication
+public class TranscendenceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TranscendenceApplication.class, args);
+    }
+}
+
+Rôle:
+- Démarre Spring Boot
+- Active l'auto-configuration
+- Lance le serveur Tomcat sur le port 8080
+
+
+B) AuthController.java
+──────────────────────
+Gère les endpoints d'authentification.
+
+Endpoints exposés:
+- POST /auth/login      → connexion utilisateur
+- POST /auth/register   → inscription nouvel utilisateur
+
+Code type:
+
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+    
+    @Autowired
+    private AuthService authService;
+    
+    @Autowired
+    private JwtUtils jwtUtil;
+    
+    @PostMapping("/login")
+    public String login(@RequestBody LoginRequest request) {
+        // 1. Chercher l'utilisateur par username
+        // 2. Vérifier le password
+        // 3. Générer et retourner le JWT
+        return jwtUtil.generateToken(request.getUsername());
+    }
+    
+    @PostMapping("/register")
+    public User register(@RequestBody RegisterRequest request) {
+        // 1. Créer nouvel utilisateur
+        // 2. Hash le password
+        // 3. Sauvegarder en BD
+        // 4. Retourner l'utilisateur créé
+        return authService.register(
+            request.getUsername(),
+            request.getEmail(),
+            request.getPassword()
+        );
+    }
+}
+
+Annotations importantes:
+- @RestController: Classe est un contrôleur qui retourne du JSON
+- @RequestMapping("/auth"): Préfixe des URL = /auth
+- @PostMapping: Accepte les requêtes POST
+- @RequestBody: Convertit le JSON en objet Java
+- @Autowired: Injection de dépendance
+
+
+C) AuthService.java
+────────────────────
+Logique métier de l'authentification.
+
+Responsabilités:
+- Validation des données d'inscription
+- Recherche d'utilisateur en BD
+- Hash du password avec BCrypt
+- Création d'utilisateur
+- Vérification des identifiants
+
+Code type:
+
+@Service
+public class AuthService {
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    
+    public User register(String username, String email, String password) {
+        // 1. Vérifier si username/email existe déjà
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
+        
+        // 2. Créer nouvel utilisateur
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        // 3. Hash le password avec BCrypt
+        user.setPassword(passwordEncoder.encode(password));
+        
+        // 4. Sauvegarder en BD
+        return userRepository.save(user);
+    }
+}
+
+Annotations:
+- @Service: Classe service (logique métier)
+- @Autowired: Injecter les dépendances
+
+
+D) User.java (Entity)
+──────────────────────
+Représente la table "users" en base de données.
+
+Code type:
+
+@Entity
+@Table(name = "users")
+public class User {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(unique = true, nullable = false)
+    private String username;
+    
+    @Column(unique = true, nullable = false)
+    private String email;
+    
+    @Column(nullable = false)
+    private String password;
+    
+    private LocalDateTime createdAt;
+    
+    // Getters et Setters
+}
+
+Annotations:
+- @Entity: Classe correspond à une table BD
+- @Table(name = "users"): Nom de la table
+- @Id: Clé primaire
+- @GeneratedValue: Auto-incrément
+- @Column(unique = true): Contrainte unique
+- @Column(nullable = false): Champ obligatoire
+
+
+E) UserRepository.java
+──────────────────────
+Accès à la table User (JPA Repository).
+
+Code:
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
+}
+
+Méthodess disponibles automatiquement:
+- save(User user): Créer/modifier
+- findById(Long id): Trouver par ID
+- findAll(): Tous les utilisateurs
+- delete(User user): Supprimer
+- Custom: findByUsername, findByEmail (créées automatiquement par convention)
+
+
+F) JwtUtils.java
+──────────────────
+Génération et validation des JWT tokens.
+
+Responsabilités:
+- Générer un JWT token avec le username
+- Valider un token
+- Extraire le username du token
+- Gérer l'expiration du token
+
+Code type:
+
+@Component
+public class JwtUtils {
+    
+    @Value("${jwt.secret:mySecretKey}")
+    private String jwtSecret;
+    
+    @Value("${jwt.expiration:86400000}") // 24h en ms
+    private int jwtExpirationMs;
+    
+    public String generateToken(String username) {
+        return Jwts.builder()
+            .subject(username)
+            .issuedAt(new Date())
+            .expiration(new Date((System.currentTimeMillis() + jwtExpirationMs)))
+            .signWith(key())
+            .compact();
+    }
+    
+    public String getUserFromJwt(String token) {
+        return Jwts.parserBuilder()
+            .setSigningKey(key())
+            .build()
+            .parseClaimsJws(token)
+            .getBody()
+            .getSubject();
+    }
+    
+    private Key key() {
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+    }
+}
+
+Format du JWT: header.payload.signature
+- header: {"alg":"HS256"}
+- payload: {"sub":"Djomino06","iat":1234567890,"exp":1234571490}
+- signature: xxxxx (signé avec la clé secrète)
+
+
+G) SecurityConfig.java
+────────────────────────
+Configuration de Spring Security et CORS.
+
+IMPORTANT: Cette classe doit permettre CORS pour que le frontend accède à l'API.
+
+Code type:
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // Permet les requêtes du frontend
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
+        // Méthodes HTTP autorisées
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Headers autorisés
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        // Inclure les credentials (cookies)
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            // Activer CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            // Désactiver CSRF pour les APIs REST
+            .csrf(csrf -> csrf.disable())
+            // Mode stateless (pas de sessions)
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Autoriser tous les accès (pour l'instant)
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/**").permitAll()
+                .anyRequest().authenticated()
+            );
+        
+        return http.build();
+    }
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+
+Configurations clés:
+- CORS: Permet les requêtes cross-origin du frontend
+- CSRF disable: Désactivé pour les APIs REST (pas nécessaire avec JWT)
+- SessionCreationPolicy.STATELESS: Pas de sessions server (JWT au lieu)
+- PasswordEncoder: BCrypt pour hasher les passwords
+
+
+H) DTOs (LoginRequest, RegisterRequest)
+────────────────────────────────────────
+Classes qui représentent les données envoyées par le client.
+
+LoginRequest.java:
+public class LoginRequest {
+    private String username;
+    private String password;
+    
+    // Getters et Setters
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
+
+RegisterRequest.java:
+public class RegisterRequest {
+    private String username;
+    private String email;
+    private String password;
+    
+    // Getters et Setters
+}
+
+Rôle:
+- Valider les données reçues
+- Convertir le JSON en objet Java (@RequestBody)
+- Documenter les champs attendus
+- Séparer les données client des entités BD
+
+
+4. CONFIGURATION DU PROJET
+==========================
+
+Fichiers de configuration:
+
+A) pom.xml (Maven)
+───────────────────
+Gère les dépendances du projet.
+
+Dépendances principales:
+
+<dependencies>
+    <!-- Spring Boot Web -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    
+    <!-- Spring Security -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    
+    <!-- Spring Data JPA -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    
+    <!-- JWT (jjwt) -->
+    <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>0.12.3</version>
+    </dependency>
+    
+    <!-- MySQL Driver -->
+    <dependency>
+        <groupId>com.mysql</groupId>
+        <artifactId>mysql-connector-j</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    
+    <!-- H2 Database (dev/test) -->
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+</dependencies>
+
+Installation des dépendances:
+cd transcendence
+mvn clean install
+
+
+B) application.properties
+──────────────────────────
+Configuration de l'application Spring Boot.
+
+Contenu:
+
+# Port du serveur
+server.port=8080
+
+# Configuration Base de Données MySQL
+spring.datasource.url=jdbc:mysql://localhost:3306/transcendence
+spring.datasource.username=root
+spring.datasource.password=yourpassword
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+
+# Logging
+logging.level.root=INFO
+logging.level.com.ft.transcendence=DEBUG
+
+# JWT Configuration
+jwt.secret=myVeryLongAndSecureSecretKeyThatHasAtLeast32Characters
+jwt.expiration=86400000
+
+Configuration pour H2 (dev/test):
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.h2.console.enabled=true
+
+
+5. ENDPOINTS API DÉTAILLÉS
+===========================
+
+BASE URL: http://localhost:8080
+
+A) POST /auth/login
+────────────────────
+
+Description: Connecter un utilisateur et retourner un JWT token
+
+Request:
+  Content-Type: application/json
+  {
+    "username": "Djomino06",
+    "password": "password123"
+  }
+
+Response (200 OK):
+  eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJEam9taW5vMDYiLCJpYXQiOjE2OTgyNDUwMDAsImV4cCI6MTY5ODMzMTQwMH0.ObQ2TFTizXHEFGb_L-7Pc4grEQcj6LIyPhiFGltYOFc
+
+Response (401 Unauthorized):
+  {
+    "error": "Invalid credentials"
+  }
+
+Exemple avec curl:
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"Djomino06","password":"password123"}'
+
+Exemple avec JavaScript:
+fetch('http://localhost:8080/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    username: 'Djomino06',
+    password: 'password123'
+  })
+})
+.then(res => res.text())
+.then(token => console.log('Token:', token));
+
+
+B) POST /auth/register
+───────────────────────
+
+Description: Créer un nouvel utilisateur
+
+Request:
+  Content-Type: application/json
+  {
+    "username": "Djomino06",
+    "email": "djomino@example.com",
+    "password": "password123"
+  }
+
+Response (200 OK):
+  {
+    "id": 1,
+    "username": "Djomino06",
+    "email": "djomino@example.com",
+    "password": "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36DRj.G",
+    "createdAt": "2026-04-19T19:23:45.123456"
+  }
+
+Response (400 Bad Request):
+  {
+    "error": "Username already exists"
+  }
+
+Exemple avec curl:
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username":"Djomino06",
+    "email":"djomino@example.com",
+    "password":"password123"
+  }'
+
+Exemple avec JavaScript:
+fetch('http://localhost:8080/auth/register', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    username: 'Djomino06',
+    email: 'djomino@example.com',
+    password: 'password123'
+  })
+})
+.then(res => res.json())
+.then(user => console.log('User created:', user));
+
+
+6. FLUX DE L'AUTHENTIFICATION
+==============================
+
+DIAGRAMME SÉQUENCE - INSCRIPTION:
+─────────────────────────────────
+
+Frontend                           Backend                    Base de Données
+   │                                │                                │
+   ├──POST /auth/register────────┬──▶ AuthController                │
+   │  (username, email, pwd)     │     │                            │
+   │                             │     ├──▶ AuthService             │
+   │                             │     │     │                      │
+   │                             │     │     ├─ Valider données      │
+   │                             │     │     │                      │
+   │                             │     │     ├──────────────────────▶ UserRepository.findByUsername()
+   │                             │     │     │                      │
+   │                             │     │     │◀──────────────────────┤ Résultat: Absent
+   │                             │     │     │                      │
+   │                             │     │     ├─ Hash password (BCrypt)
+   │                             │     │     │                      │
+   │                             │     │     ├──────────────────────▶ save(user)
+   │                             │     │     │                      │
+   │                             │     │     │◀──────────────────────┤ User créé avec ID
+   │                             │     │                            │
+   │                             │     ◀─────── retour User ─────────
+   │                             │                                  │
+   │◀──────────────────────────── JSON User ─────────────────────┐  │
+   │     Response 200            │                               │  │
+   │                             │                               │  │
+
+
+DIAGRAMME SÉQUENCE - CONNEXION:
+────────────────────────────────
+
+Frontend                           Backend                    Base de Données
+   │                                │                                │
+   ├──POST /auth/login────────┬──▶ AuthController                │
+   │  (username, pwd)         │     │                            │
+   │                          │     ├──▶ Vérifier identifiants   │
+   │                          │     │     │                      │
+   │                          │     │     ├──────────────────────▶ findByUsername()
+   │                          │     │     │                      │
+   │                          │     │     │◀──────────────────────┤ User trouvé
+   │                          │     │     │                      │
+   │                          │     │     ├─ Vérifier password (BCrypt.matches)
+   │                          │     │     │                      │
+   │                          │     ├──▶ JwtUtils.generateToken()
+   │                          │     │     │                      │
+   │                          │     │     ├─ Générer JWT avec username
+   │                          │     │     │                      │
+   │                          │     ◀─────── JWT Token ─────────
+   │                          │                                  │
+   │◀──────────────────────── Plain Text JWT ─────────────────────
+   │     Response 200                                          │
+   │                                                          │
+   ├─ Stocke dans localStorage (key: "jwt_token")              │
+   │                                                          │
+
+
+STRUCTURE JWT GÉNÉRÉ:
+─────────────────────
+
+Header (base64):
+{
+  "alg": "HS256"
+}
+
+Payload (base64):
+{
+  "sub": "Djomino06",           // Subject (username)
+  "iat": 1698245000,             // Issued at (timestamp)
+  "exp": 1698331400              // Expiration (timestamp)
+}
+
+Signature:
+HMACSHA256(base64(header) + "." + base64(payload), "mySecretKey")
+
+Format final:
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJEam9taW5vMDYiLCJpYXQiOjE2OTgyNDUwMDAsImV4cCI6MTY5ODMzMTQwMH0.ObQ2TFTizXHEFGb_L-7Pc4grEQcj6LIyPhiFGltYOFc
+
+
+7. INSTALLATION ET DÉMARRAGE
+=============================
+
+PRÉREQUIS:
+──────────
+✓ Java 17 ou supérieur
+✓ Maven 3.8 ou supérieur
+✓ Git
+✓ MySQL 5.7+ OU PostgreSQL 10+ (optionnel, peut utiliser H2 en dev)
+
+
+ÉTAPES D'INSTALLATION (WINDOWS/MAC/LINUX):
+────────────────────────────────────────────
+
+1. Vérifier les prérequis:
+
+   # Vérifier Java
+   java -version
+   
+   # Doit afficher: openjdk version "17.x.x"
+
+   # Vérifier Maven
+   mvn -version
+   
+   # Doit afficher: Apache Maven 3.8.x
+
+
+2. Cloner le projet (si pas encore fait):
+
+   git clone https://github.com/yourepo/transcendence.git
+   cd transcendence
+
+
+3. Configurer la base de données (optionnel):
+
+   OPTION A - MySQL (recommandé):
+   ──────────────────────────────
+   a. Créer la base de données:
+      
+      mysql -u root -p
+      CREATE DATABASE transcendence;
+      USE transcendence;
+      
+   b. Éditer application.properties:
+      
+      spring.datasource.url=jdbc:mysql://localhost:3306/transcendence
+      spring.datasource.username=root
+      spring.datasource.password=votrepassword
+      spring.jpa.hibernate.ddl-auto=update
+
+   OPTION B - H2 (développement/test):
+   ───────────────────────────────────
+   a. Éditer application.properties:
+      
+      spring.datasource.url=jdbc:h2:mem:testdb
+      spring.datasource.driverClassName=org.h2.Driver
+      spring.h2.console.enabled=true
+      
+   b. Console H2 accessible sur:
+      http://localhost:8080/h2-console
+
+
+4. Compiler le projet:
+
+   cd transcendence
+   mvn clean install
+   
+   # Cela va:
+   # - Télécharger les dépendances
+   # - Compiler le code
+   # - Lancer les tests
+   # - Créer les JARs
+
+
+5. Démarrer le serveur:
+
+   OPTION A - Avec Maven:
+   ─────────────────────
+   mvn spring-boot:run
+   
+   OPTION B - Avec le JAR:
+   ──────────────────────
+   java -jar target/transcendence-0.0.1-SNAPSHOT.jar
+   
+   OPTION C - Avec l'IDE (IntelliJ/Eclipse):
+   ──────────────────────────────────────────
+   - Ouvrir le projet
+   - Clic droit → Run as Spring Boot App
+
+
+6. Vérifier que le serveur est démarré:
+
+   # Devrait afficher:
+   # ...
+   # 2026-04-19 19:23:45.123  INFO [...] Tomcat initialized with port: 8080
+   # 2026-04-19 19:23:46.456  INFO [...] Started TranscendenceApplication
+   # ...
+   
+   # Visiter:
+   curl http://localhost:8080/
+   
+   # Tester l'API:
+   curl -X POST http://localhost:8080/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{"username":"test","email":"test@example.com","password":"test123"}'
+
+
+8. BASE DE DONNÉES
+==================
+
+SCHÉMA INITIAL (H2/MySQL):
+──────────────────────────
+
+Table: users
+┌────────┬──────────────┬──────────┬────────────────────────┐
+│ id     │ username     │ email    │ password               │
+│ (PK)   │ (UNIQUE)     │ (UNIQUE) │ (BCrypt)               │
+├────────┼──────────────┼──────────┼────────────────────────┤
+│ 1      │ Djomino06    │ djo@...  │ $2a$10$N9qo8...       │
+│ 2      │ testuser     │ test@... │ $2a$10$dxS7f...       │
+└────────┴──────────────┴──────────┴────────────────────────┘
+
+SQL (création manuelle):
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+JPA va créer la table automatiquement avec:
+spring.jpa.hibernate.ddl-auto=update
+
+
+DONNÉES DE TEST:
+────────────────
+
+Pour tester l'API sans frontend:
+
+1. Créer un utilisateur:
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username":"testuser",
+    "email":"testuser@example.com",
+    "password":"password123"
+  }'
+
+2. Se connecter:
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username":"testuser",
+    "password":"password123"
+  }'
+
+3. Récupérer le token retourné
+4. L'utiliser pour d'autres requêtes
+
+
+9. SÉCURITÉ ET CORS
+===================
+
+CONFIGURATION CORS:
+────────────────────
+
+SecurityConfig.java déjà configuré avec:
+- Allowed Origins: http://localhost:4200 (frontend)
+- Allowed Methods: GET, POST, PUT, DELETE, OPTIONS
+- Allowed Headers: * (tous)
+- Credentials: true
+
+À MODIFIER AVANT PRODUCTION:
+─────────────────────────────
+
+configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
+↓
+configuration.setAllowedOrigins(Arrays.asList("https://votredomaine.com"));
+
+Changer aussi:
+- Le jwt.secret (clé très longue et aléatoire)
+- Le jwt.expiration (actuellement 24h = 86400000ms)
+
+
+HASHAGE DES PASSWORDS:
+───────────────────────
+
+Utilisé: BCrypt
+- Chaque password est hasé avant sauvegarde en BD
+- Non déchiffrable (one-way hashing)
+- Résistant aux attaques brute-force
+- Exemple: password123 → $2a$10$N9qo8uLOickgx2ZMRZoM...
+
+Vérification:
+passwordEncoder.matches(plaintextPassword, hashedPassword)
+
+
+TOKENS JWT:
+────────────
+
+Stockage Frontend:
+- localStorage["jwt_token"] = token
+- ATTENTION: Clair en localStorage (pas sécurisé pour production)
+- En production: utiliser httpOnly cookies
+
+Validation:
+- À chaque requête, le frontend inclut le token
+- Le backend valide la signature et l'expiration
+- Si invalid → 401 Unauthorized
+
+
+10. DÉPANNAGE ET ERREURS COURANTES
+===================================
+
+ERREUR: "Connection refused" port 3306
+─────────────────────────────────────
+Cause: MySQL n'est pas démarré
+Solution:
+- Vérifier que MySQL est en cours d'exécution
+- Sur Windows: Services → MySQL80
+- Sur Mac: brew services start mysql
+- Sur Linux: sudo systemctl start mysql
+
+
+ERREUR: "Unknown database 'transcendence'"
+──────────────────────────────────────────
+Cause: BD non créée
+Solution:
+mysql -u root -p
+CREATE DATABASE transcendence;
+
+
+ERREUR: "Request method 'OPTIONS' not supported"
+──────────────────────────────────────────────
+Cause: CORS non configuré
+Solution:
+- Vérifier SecurityConfig.java
+- Vérifier que corsConfigurationSource() est appelé
+- Redémarrer le serveur
+
+
+ERREUR: "Invalid JWT token" (du frontend)
+──────────────────────────────────────────
+Cause: Token expiré ou invalide
+Solution:
+- Vérifier que jwt.secret est le même partout
+- Vérifier l'expiration du token
+- Tester avec curl avant le frontend
+
+
+ERREUR: "Could not find class 'JwtUtils'"
+──────────────────────────────────────────
+Cause: Dépendances manquantes
+Solution:
+mvn clean install
+mvn dependency:resolve
+
+
+ERREUR: BUILD FAILURE
+──────────────────────
+Cause: Erreurs de compilation
+Solution:
+1. Vérifier la syntaxe Java
+2. Vérifier les imports
+3. mvn clean install -X (verbose)
+4. Consulter les warnings du build
+
+
+11. PROCHAINES ÉTAPES ET AMÉLIORATIONS
+=======================================
+
+À FAIRE (URGENT):
+──────────────────
+
+1. Validation des données:
+   □ Ajouter @Valid et @Validated
+   □ Vérifier les formats (email, username)
+   □ Longueur minimum/maximum
+   □ Messages d'erreur détaillés
+
+2. Gestion des exceptions:
+   □ Créer GlobalExceptionHandler
+   □ Retourner les erreurs en JSON cohérent
+   □ HTTP status codes corrects (400, 401, 403, 500)
+
+3. Tests:
+   □ Tests unitaires AuthService (JUnit)
+   □ Tests d'intégration (MockMvc)
+   □ Tests JWT (validation tokens)
+
+4. Logging:
+   □ Logger les tentatives de login
+   □ Logger les erreurs
+   □ Monitorer les performances
+
+5. Base de données:
+   □ Ajouter migrations (Flyway)
+   □ Ajouter des audits (createdAt, updatedAt)
+   □ Index sur username/email
+
+
+À FAIRE (MOYEN TERME):
+──────────────────────
+
+6. Authentification avancée:
+   □ Refresh tokens (renouvellement automatique)
+   □ Blacklist de tokens (logout)
+   □ Rate limiting (prévention brute force)
+   □ 2FA (authentification 2 facteurs)
+
+7. Autorisation:
+   □ Rôles utilisateur (ADMIN, USER)
+   □ @PreAuthorize pour les endpoints
+   □ Permissions granulaires
+
+8. API REST complète:
+   □ GET /auth/me (profil utilisateur)
+   □ PUT /auth/profile (éditer profil)
+   □ DELETE /auth/profile (supprimer compte)
+   □ GET /users/{id}
+
+9. Performance:
+   □ Caching (Redis)
+   □ Pagination
+   □ Compression GZIP
+
+10. DevOps:
+   □ Docker
+   □ CI/CD Pipeline
+   □ Monitoring (Prometheus, Grafana)
+   □ Logging centralisé (ELK stack)
+
+
+À FAIRE (LONG TERME):
+─────────────────────
+
+11. Architecture avancée:
+   □ Microservices
+   □ Message queue (RabbitMQ)
+   □ Event sourcing
+   □ CQRS pattern
+
+12. Sécurité avancée:
+   □ OAuth2 / OpenID Connect
+   □ SAML
+   □ Audit trail
+   □ Chiffrement de données sensibles
+
+
+12. CONVENTIONS DE CODAGE
+==========================
+
+NOMMAGE:
+─────────
+
+Classes:
+- PascalCase: UserService, AuthController, JwtUtils
+- Suffixes: *Service, *Controller, *Repository, *Request, *Response
+
+Méthodes:
+- camelCase: findByUsername, generateToken, validatePassword
+- Verbes: get*, set*, find*, create*, update*, delete*, validate*
+
+Variables:
+- camelCase: userName, jwtToken, userRepository
+
+Constantes:
+- UPPER_SNAKE_CASE: JWT_SECRET, TOKEN_EXPIRATION_MS
+
+
+ORGANISATION:
+──────────────
+
+1. Importer les packages Spring en premier
+2. Puis les imports métier
+3. Puis java.*, javax.*
+
+Exemple:
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.ft.transcendence.model.User;
+import com.ft.transcendence.repository.UserRepository;
+import java.util.Optional;
+
+
+COMMENTAIRES:
+──────────────
+
+Classes:
+/**
+ * Service d'authentification des utilisateurs.
+ * Gère l'inscription, la connexion et la validation des credentials.
+ */
+
+Méthodes:
+/**
+ * Génère un JWT token pour l'utilisateur spécifié.
+ * 
+ * @param username le nom d'utilisateur
+ * @return le JWT token signé
+ */
+public String generateToken(String username) { ... }
+
+
+STRUCTURE DES MÉTHODES:
+────────────────────────
+
+public ResponseType methodName(ParameterType param) {
+    // 1. Valider les paramètres
+    if (param == null) {
+        throw new IllegalArgumentException("Parameter cannot be null");
+    }
+    
+    // 2. Logique métier
+    Result result = businessLogic();
+    
+    // 3. Logger et retourner
+    logger.info("Method completed successfully");
+    return result;
+}
+
+
+TESTS:
+───────
+
+Exemple de test unitaire:
+@Test
+public void testGenerateToken() {
+    String token = jwtUtils.generateToken("testuser");
+    assertNotNull(token);
+    assertTrue(token.startsWith("eyJ"));
+}
+
+
+================================================================================
+                        FIN DE LA DOCUMENTATION BACKEND
+================================================================================
+
+QUESTIONS FRÉQUENTES (FAQ):
+===========================
+
+Q: Où configurar la base de données?
+R: Dans src/main/resources/application.properties
+
+Q: Comment démarrer le backend?
+R: mvn spring-boot:run (depuis le dossier transcendence)
+
+Q: Le token est valide combien de temps?
+R: Actuellement 24 heures (configuré dans jwt.expiration)
+
+Q: Comment ajouter des endpoints?
+R: Créer une méthode dans un @RestController avec @PostMapping/@GetMapping
+
+Q: Comment protéger un endpoint avec JWT?
+R: À développer - ajouter un filtre JWT dans SecurityConfig
+
+Q: Où stocker les données sensibles?
+R: application.properties.local (non commité) ou variables d'env
+
+Q: Comment déboguer?
+R: Consulter les logs dans la console / utiliser l'IDE debugger
+
+================================================================================

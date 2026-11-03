@@ -1,0 +1,26 @@
+{
+  "name": "42Bets",
+  "description": "42Bets application",
+  "homepage_url": "https://github.com/Dmariano06/transcendence",
+  "callback_url": "http://localhost:8080/login/oauth2/code/github",
+  "expire_user_authorization_tokens": true,
+  "request_user_authorization_during_installation": false,
+  "enable_device_flow": false,
+  "setup_url": "",
+  "redirect_on_update": false,
+  "webhook": {
+    "active": false,
+    "url": "",
+    "secret": ""
+  },
+  "permissions": {
+    "repository": {},
+    "organization": {},
+    "account": {
+      "email_addresses": "read"
+    }
+  },
+  "subscribe_to_events": [],
+  "installation_target": "only_this_account",
+  "installation_target_account": "Dmariano06"
+}

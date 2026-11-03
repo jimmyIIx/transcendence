@@ -1,0 +1,92 @@
+<section class="legal-page">
+  <div class="legal-document-shell">
+    <div class="legal-page-indicator" aria-hidden="true">{{ 'TERMS.PAGE_INDICATOR' | translate: {current: currentPage(), total: totalPages} }}</div>
+    <div class="legal-document" #documentViewer (scroll)="onDocumentScroll(documentViewer)">
+      <div class="legal-content legal-paper-stack">
+        <article class="legal-paper">
+          <header class="legal-paper-header">
+            <p class="legal-kicker">{{ 'TERMS.KICKER' | translate }}</p>
+            <h1>{{ 'TERMS.TITLE' | translate }}</h1>
+            <p class="legal-updated">{{ 'TERMS.VERSION' | translate }}</p>
+            <p class="legal-intro">{{ 'TERMS.INTRO1' | translate }}</p>
+            <p class="legal-intro">{{ 'TERMS.INTRO2' | translate }}</p>
+          </header>
+
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S1_TITLE' | translate }}</h2>
+            <p>{{ 'TERMS.S1_P1' | translate }}</p>
+            <p>{{ 'TERMS.S1_P2' | translate }}</p>
+            <p class="legal-notice">{{ 'TERMS.S1_NOTICE' | translate }}</p>
+          </section>
+
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S2_TITLE' | translate }}</h2>
+            <p>{{ 'TERMS.S2_P1' | translate }}</p>
+            <p>{{ 'TERMS.S2_P2' | translate }}</p>
+          </section>
+
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S3_TITLE' | translate }}</h2>
+            <ul>
+              <li>{{ 'TERMS.S3_LI1' | translate }}</li>
+              <li>{{ 'TERMS.S3_LI2' | translate }}</li>
+              <li>{{ 'TERMS.S3_LI3' | translate }}</li>
+              <li>{{ 'TERMS.S3_LI4' | translate }}</li>
+            </ul>
+          </section>
+        </article>
+
+        <article class="legal-paper">
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S4_TITLE' | translate }}</h2>
+            <p>{{ 'TERMS.S4_P1' | translate }}</p>
+            <p>{{ 'TERMS.S4_P2' | translate }}</p>
+          </section>
+
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S5_TITLE' | translate }}</h2>
+            <ul>
+              <li>{{ 'TERMS.S5_LI1' | translate }}</li>
+              <li>{{ 'TERMS.S5_LI2' | translate }}</li>
+              <li>{{ 'TERMS.S5_LI3' | translate }}</li>
+              <li>{{ 'TERMS.S5_LI4' | translate }}</li>
+              <li>{{ 'TERMS.S5_LI5' | translate }}</li>
+            </ul>
+          </section>
+
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S6_TITLE' | translate }}</h2>
+            <p>{{ 'TERMS.S6_P1' | translate }}</p>
+            <p>{{ 'TERMS.S6_P2' | translate }}</p>
+          </section>
+        </article>
+
+        <article class="legal-paper">
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S7_TITLE' | translate }}</h2>
+            <p>{{ 'TERMS.S7_P1' | translate }}</p>
+            <p>{{ 'TERMS.S7_P2' | translate }}</p>
+          </section>
+
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S8_TITLE' | translate }}</h2>
+            <p>{{ 'TERMS.S8_P1' | translate }}</p>
+            <p>{{ 'TERMS.S8_P2' | translate }}</p>
+          </section>
+
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S9_TITLE' | translate }}</h2>
+            <p>{{ 'TERMS.S9_P1' | translate }}</p>
+            <p>{{ 'TERMS.S9_P2' | translate }}</p>
+          </section>
+
+          <section class="legal-section">
+            <h2>{{ 'TERMS.S10_TITLE' | translate }}</h2>
+            <p>{{ 'TERMS.S10_P1' | translate }}</p>
+            <p>{{ 'TERMS.S10_P2' | translate }}</p>
+          </section>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>

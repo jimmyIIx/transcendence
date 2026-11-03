@@ -1,0 +1,53 @@
+<section class="faq">
+  <header class="faq-header">
+    <p class="faq-eyebrow">{{ 'FAQ.EYEBROW' | translate }}</p>
+    <h1>{{ 'FAQ.TITLE' | translate }}</h1>
+    <p class="faq-lead">{{ 'FAQ.LEAD' | translate }}</p>
+  </header>
+
+  <div class="faq-categories">
+    <section class="faq-category" *ngFor="let category of categories; let c = index">
+      <div class="faq-category-head">
+        <span class="faq-category-badge">{{ category.badge | translate }}</span>
+        <h2>{{ category.title | translate }}</h2>
+      </div>
+
+      <div class="faq-list">
+        <article
+          class="faq-item"
+          *ngFor="let item of category.items; let i = index"
+          [class.is-open]="isOpen(c + '-' + i)"
+        >
+          <button
+            type="button"
+            class="faq-question"
+            [attr.aria-expanded]="isOpen(c + '-' + i)"
+            (click)="toggle(c + '-' + i)"
+          >
+            <span class="faq-question-text">{{ item.question | translate }}</span>
+            <span class="faq-icon" aria-hidden="true"></span>
+          </button>
+          <div class="faq-answer" *ngIf="isOpen(c + '-' + i)">
+            <p>{{ item.answer | translate }}</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <footer class="faq-cta">
+    <h3>{{ 'FAQ.CTA_TITLE' | translate }}</h3>
+    <p *ngIf="!isLoggedIn()">{{ 'FAQ.CTA_LEAD_VISITOR' | translate }}</p>
+    <p *ngIf="isLoggedIn()">{{ 'FAQ.CTA_LEAD_LOGGED_IN' | translate }}</p>
+    <div class="faq-cta-actions">
+      <a class="faq-primary" routerLink="/register" *ngIf="!isLoggedIn()">{{ 'FAQ.CTA_BTN_REGISTER' | translate }}</a>
+      <a
+        routerLink="/markets"
+        [class.faq-primary]="isLoggedIn()"
+        [class.faq-secondary]="!isLoggedIn()"
+      >
+        {{ 'FAQ.CTA_BTN_MARKETS' | translate }}
+      </a>
+    </div>
+  </footer>
+</section>

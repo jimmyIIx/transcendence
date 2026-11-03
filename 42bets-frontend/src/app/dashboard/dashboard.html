@@ -1,0 +1,281 @@
+<div class="pf-page">
+  <div class="pf-container">
+    <!-- Top summary cards -->
+    <div class="pf-cards">
+      <!-- Portfolio card -->
+      <section class="pf-card pf-portfolio">
+        <div class="pf-portfolio-top">
+          <div class="pf-portfolio-main">
+            <div class="pf-labelrow">
+              <p class="pf-label">{{ 'DASHBOARD.PORTFOLIO_LABEL' | translate }}</p>
+            </div>
+            <div class="pf-balance">
+              <span class="pf-balance-value">{{ balanceHidden() ? '••••' : (portfolioTotal() | number: '1.2-2') }}</span>
+              <img *ngIf="!balanceHidden()" src="/token42.png" [attr.alt]="'PROFILE.TOKEN_ALT' | translate" class="pf-token-icon" />
+              <button type="button" class="pf-eye" (click)="toggleBalanceHidden()" [attr.aria-label]="balanceHidden() ? ('DASHBOARD.BALANCE_SHOW_ARIA' | translate) : ('DASHBOARD.BALANCE_HIDE_ARIA' | translate)">
+                <svg *ngIf="!balanceHidden()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+                  <path d="M4.8077 13.1923C3.4687 12.267 2.56488 11.0325 2.04418 10.1133C1.65178 9.42061 1.65178 8.57951 2.04418 7.88681C2.99118 6.21511 5.2055 3.50009 8.9999 3.50009C10.708 3.50009 12.0959 4.0503 13.1921 4.8078" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                  <path d="M15.327 6.9151C15.578 7.2579 15.7869 7.58889 15.9556 7.88669C16.348 8.57939 16.348 9.42049 15.9556 10.1132C15.0086 11.7849 12.7943 14.4999 8.99994 14.4999C8.59234 14.4999 8.20304 14.4686 7.83154 14.4106" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                  <path d="M7.05551 10.9446C6.55781 10.4469 6.25 9.7594 6.25 9C6.25 7.4812 7.4812 6.25 9 6.25C9.7594 6.25 10.4469 6.55779 10.9445 7.05539" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                  <path d="M2 16L16 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </svg>
+                <svg *ngIf="balanceHidden()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+                  <path d="M2.04418 10.1133C1.65178 9.42061 1.65178 8.57951 2.04418 7.88681C2.99118 6.21511 5.2055 3.50009 8.9999 3.50009C12.7943 3.50009 15.0086 6.21511 15.9556 7.88681C16.348 8.57951 16.348 9.42061 15.9556 10.1133C15.0086 11.785 12.7943 14.5 8.9999 14.5C5.2055 14.5 2.99118 11.785 2.04418 10.1133Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                  <path d="M9 11.25C10.2426 11.25 11.25 10.2426 11.25 9C11.25 7.75736 10.2426 6.75 9 6.75C7.75736 6.75 6.75 7.75736 6.75 9C6.75 10.2426 7.75736 11.25 9 11.25Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </svg>
+              </button>
+            </div>
+            <p class="pf-subtle" [class.pf-up]="dayPnl() > 0" [class.pf-down]="dayPnl() < 0">
+              <span>{{ dayPnl() >= 0 ? '+' : '' }}{{ dayPnl() | number: '1.2-2' }} ({{ dayPnlPct() >= 0 ? '+' : '' }}{{ dayPnlPct() | number: '1.0-2' }}%)</span>
+              <span>&nbsp;{{ 'DASHBOARD.LAST_DAY_SUFFIX' | translate }}</span>
+            </p>
+          </div>
+          <div class="pf-available">
+            <p class="pf-label">{{ 'DASHBOARD.AVAILABLE_TO_TRADE' | translate }}</p>
+            <p class="pf-available-value">{{ balanceHidden() ? '••••' : ((balance() ?? 0) | number: '1.2-2') }}</p>
+          </div>
+        </div>
+
+        <div class="pf-wallet">
+          <div class="pf-wallet-heading">
+            <span class="pf-wallet-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 8.5A2.5 2.5 0 0 1 5.5 6H18a1 1 0 0 0 0-2H6" />
+                <path d="M3 8.5V17a2.5 2.5 0 0 0 2.5 2.5H19a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H5.5A2.5 2.5 0 0 1 3 8.5Z" />
+                <circle cx="16.5" cy="13" r="1.2" fill="currentColor" stroke="none" />
+              </svg>
+            </span>
+            <div class="pf-wallet-heading-text">
+              <p class="pf-wallet-title">{{ 'DASHBOARD.WALLET_ADDRESS_TITLE' | translate }}</p>
+              <p class="pf-wallet-hint">
+                {{ 'DASHBOARD.WALLET_LEAD' | translate }}
+              </p>
+            </div>
+          </div>
+
+          <div class="pf-wallet-field">
+            <input
+              type="text"
+              class="pf-wallet-input"
+              [(ngModel)]="walletInput"
+              name="walletInput"
+              [placeholder]="'DASHBOARD.WALLET_INPUT_PLACEHOLDER' | translate"
+              autocomplete="off"
+              spellcheck="false"
+              [attr.aria-label]="'DASHBOARD.WALLET_ADDRESS_TITLE' | translate"
+            />
+            <button type="button" class="pf-wallet-save" [disabled]="walletSaving()" (click)="saveWalletAddress()">
+              {{ walletSaving() ? ('DASHBOARD.WALLET_BTN_SAVING' | translate) : ('DASHBOARD.WALLET_BTN_SAVE' | translate) }}
+            </button>
+          </div>
+
+          <div class="pf-wallet-saved" *ngIf="walletJustSaved()">
+            <svg class="pf-wallet-check" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M10 1.667a8.333 8.333 0 1 1 0 16.666 8.333 8.333 0 0 1 0-16.666Zm3.94 5.4a.833.833 0 0 0-1.214.02l-3.472 4.05-1.53-1.53a.833.833 0 1 0-1.179 1.179l2.167 2.166a.833.833 0 0 0 1.221-.044l4.05-4.725a.833.833 0 0 0-.043-1.166Z" />
+            </svg>
+            <span class="pf-wallet-saved-label">{{ 'DASHBOARD.WALLET_ADDRESS_SAVED' | translate }}</span>
+          </div>
+
+          <p class="pf-wallet-current" *ngIf="walletAddress() && !walletJustSaved()">
+            <span class="pf-wallet-current-label">{{ 'DASHBOARD.WALLET_ADDRESS_PREFIX' | translate }}</span>
+            <span class="pf-wallet-current-value">{{ shortWallet() }}</span>
+          </p>
+
+          <p class="pf-wallet-msg" *ngIf="walletMessage()">{{ walletMessage() }}</p>
+        </div>
+      </section>
+
+      <!-- Profit / Loss card -->
+      <section class="pf-card pf-pnl">
+        <div class="pf-pnl-head">
+          <div class="pf-pnl-title">
+            <span class="pf-dot"></span>
+            <h2>{{ 'DASHBOARD.PNL_TITLE' | translate }}</h2>
+          </div>
+          <div class="pf-range">
+            <button
+              *ngFor="let range of chartRanges"
+              type="button"
+              class="pf-range-btn"
+              [class.pf-range-btn-active]="chartRange() === range.id"
+              (click)="selectRange(range.id)"
+            >
+              {{ range.labelKey | translate }}
+            </button>
+          </div>
+        </div>
+
+        <div class="pf-pnl-valuerow">
+          <div class="pf-pnl-value" [class.pf-up]="rangePnl() > 0" [class.pf-down]="rangePnl() < 0">
+            <span>{{ rangePnl() >= 0 ? '+' : '' }}{{ rangePnl() | number: '1.2-2' }}</span>
+            <img src="/token42.png" [attr.alt]="'PROFILE.TOKEN_ALT' | translate" class="pf-token-icon-sm" />
+          </div>
+        </div>
+        <p class="pf-subtle" [class.pf-up]="rangePnl() > 0" [class.pf-down]="rangePnl() < 0">
+          {{ rangePnl() >= 0 ? '+' : '' }}{{ rangePnlPct() | number: '1.0-2' }}% · {{ rangeLabel() }}
+        </p>
+
+        <div class="pf-chart" [style.--pf-chart-color]="chartColor()">
+          <svg viewBox="0 0 442 65" preserveAspectRatio="none" role="img" [attr.aria-label]="'DASHBOARD.CHART_ARIA' | translate">
+            <defs>
+              <linearGradient id="pf-area" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--pf-chart-color)" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="var(--pf-chart-color)" stop-opacity="0.01" />
+              </linearGradient>
+            </defs>
+            <path [attr.d]="chartAreaPath()" fill="url(#pf-area)" />
+            <path [attr.d]="chartLinePath()" fill="none" stroke="var(--pf-chart-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+      </section>
+
+      <section class="pf-card pf-insights">
+        <div class="pf-insights-head">
+          <h2>{{ 'DASHBOARD.INSIGHTS_TITLE' | translate }}</h2>
+          <p>{{ 'DASHBOARD.INSIGHTS_SUB' | translate }}</p>
+        </div>
+
+        <div class="pf-analytics-grid">
+          <article class="pf-analytics-card">
+            <h3>{{ 'DASHBOARD.VOLUME_BY_CATEGORY' | translate }}</h3>
+            <div *ngIf="categoryBars().length > 0; else noCategoryData" class="pf-bars">
+              <div *ngFor="let bar of categoryBars()" class="pf-bar-row">
+                <span class="pf-bar-label">{{ bar.label }}</span>
+                <div class="pf-bar-track" role="img" [attr.aria-label]="'DASHBOARD.BAR_CATEGORY_ARIA' | translate">
+                  <span class="pf-bar-fill" [style.width.%]="(bar.value / categoryBarMax()) * 100"></span>
+                </div>
+                <span class="pf-bar-value">{{ bar.value | number: '1.2-2' }}</span>
+              </div>
+            </div>
+            <ng-template #noCategoryData>
+              <p class="pf-analytics-empty">{{ 'DASHBOARD.NO_CATEGORY_DATA' | translate }}</p>
+            </ng-template>
+          </article>
+
+          <article class="pf-analytics-card">
+            <h3>{{ 'DASHBOARD.YES_NO_SPLIT' | translate }}</h3>
+            <div class="pf-pie-wrap" *ngIf="sideSplit().total > 0; else noSideData">
+              <div class="pf-pie" [style.background]="sidePieStyle()" role="img" [attr.aria-label]="'DASHBOARD.PIE_YES_NO_ARIA' | translate"></div>
+              <div class="pf-pie-legend">
+                <p><span class="pf-dot yes"></span> YES {{ sideSplit().yesPct | number: '1.0-1' }}%</p>
+                <p><span class="pf-dot no"></span> NO {{ sideSplit().noPct | number: '1.0-1' }}%</p>
+              </div>
+            </div>
+            <ng-template #noSideData>
+              <p class="pf-analytics-empty">{{ 'DASHBOARD.NO_SIDE_DATA' | translate }}</p>
+            </ng-template>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tabs + controls -->
+    <div class="pf-toolbar">
+      <div class="pf-tabs">
+        <button
+          type="button"
+          class="pf-tab"
+          [class.pf-tab-active]="activeTab() === 'positions'"
+          (click)="selectTab('positions')"
+        >
+          {{ 'DASHBOARD.TAB_POSITIONS' | translate }}
+        </button>
+        <button
+          type="button"
+          class="pf-tab"
+          [class.pf-tab-active]="activeTab() === 'history'"
+          (click)="selectTab('history')"
+        >
+          {{ 'DASHBOARD.TAB_HISTORY' | translate }}
+        </button>
+      </div>
+
+      <div class="pf-advanced-controls">
+        <select [ngModel]="selectedSide()" (ngModelChange)="setSideFilter($event)" class="pf-filter-select" [attr.aria-label]="'DASHBOARD.FILTER_SIDE_ARIA' | translate">
+          <option value="ALL">{{ 'DASHBOARD.FILTER_ALL_SIDES' | translate }}</option>
+          <option value="YES">{{ 'DASHBOARD.SIDE_YES' | translate }}</option>
+          <option value="NO">{{ 'DASHBOARD.SIDE_NO' | translate }}</option>
+        </select>
+
+        <select [ngModel]="selectedStatus()" (ngModelChange)="setStatusFilter($event)" class="pf-filter-select" [attr.aria-label]="'DASHBOARD.FILTER_STATUS_ARIA' | translate">
+          <option value="ALL">{{ 'DASHBOARD.FILTER_ALL_STATUSES' | translate }}</option>
+          <option value="FILLED">{{ 'DASHBOARD.STATUS_FILLED' | translate }}</option>
+          <option value="CANCELLED">{{ 'DASHBOARD.STATUS_CANCELLED' | translate }}</option>
+          <option value="WON">{{ 'DASHBOARD.FILTER_WON' | translate }}</option>
+          <option value="LOST">{{ 'DASHBOARD.FILTER_LOST' | translate }}</option>
+        </select>
+
+        <select [ngModel]="categoryFilter()" (ngModelChange)="setCategoryFilter($event)" class="pf-filter-select" [attr.aria-label]="'DASHBOARD.FILTER_CATEGORY_ARIA' | translate">
+          <option value="">{{ 'DASHBOARD.FILTER_ALL_CATEGORIES' | translate }}</option>
+          <option *ngFor="let c of availableCategories()" [value]="c">{{ c }}</option>
+        </select>
+
+        <label class="pf-date-wrap">
+          <span>{{ 'DASHBOARD.DATE_FROM' | translate }}</span>
+          <input type="date" [ngModel]="dateFrom()" (ngModelChange)="setDateFrom($event)" class="pf-filter-date" />
+        </label>
+
+        <label class="pf-date-wrap">
+          <span>{{ 'DASHBOARD.DATE_TO' | translate }}</span>
+          <input type="date" [ngModel]="dateTo()" (ngModelChange)="setDateTo($event)" class="pf-filter-date" />
+        </label>
+
+        <button type="button" class="pf-action pf-action-ghost" (click)="clearFilters()">{{ 'DASHBOARD.RESET' | translate }}</button>
+        <div class="pf-export-actions">
+          <button type="button" class="pf-action" (click)="exportCsv()">{{ 'DASHBOARD.EXPORT_CSV' | translate }}</button>
+          <button type="button" class="pf-action" (click)="exportPdf()">{{ 'DASHBOARD.EXPORT_PDF' | translate }}</button>
+        </div>
+      </div>
+    </div>
+
+    <p *ngIf="ordersError()" class="pf-error">{{ ordersError() }}</p>
+
+    <!-- Positions / orders table -->
+    <div class="pf-table-wrap">
+      <table class="pf-table">
+        <thead>
+          <tr>
+            <th class="pf-col-market">{{ 'DASHBOARD.TH_MARKET' | translate }}</th>
+            <th class="pf-col-num">{{ 'DASHBOARD.TABLE_AVG_NOW' | translate }}</th>
+            <th class="pf-col-num">{{ 'DASHBOARD.TABLE_TRADED' | translate }}</th>
+            <th class="pf-col-num">{{ 'DASHBOARD.TABLE_TO_WIN' | translate }}</th>
+            <th class="pf-col-num">{{ 'DASHBOARD.TABLE_VALUE' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let o of displayedRows()">
+            <td class="pf-col-market">
+              <a [routerLink]="['/markets']" class="pf-market-link">{{ o | marketQuestion }}</a>
+              <span class="pf-market-meta">
+                <span class="pf-side" [class.yes]="o.side === 'YES'" [class.no]="o.side === 'NO'">
+                  {{ o.side === 'YES' ? ('DASHBOARD.SIDE_YES' | translate) : ('DASHBOARD.SIDE_NO' | translate) }}
+                </span>
+                <span class="pf-category">{{ o.marketCategory }}</span>
+              </span>
+            </td>
+            <td class="pf-col-num">
+              <span class="pf-avg">{{ avgPrice(o) | number: '1.0-0' }}%</span>
+              <svg class="pf-arrow" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                <line x1="1" y1="6" x2="10.75" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                <polyline points="7.75 9.25 11 6 7.75 2.75" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="pf-now">{{ avgPrice(o) | number: '1.0-0' }}%</span>
+            </td>
+            <td class="pf-col-num">{{ cost(o) | number: '1.2-2' }}</td>
+            <td class="pf-col-num">{{ toWin(o) | number: '1.2-2' }}</td>
+            <td class="pf-col-num pf-col-value">{{ value(o) | number: '1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="ordersLoading()" class="pf-empty">{{ 'DASHBOARD.LOADING' | translate }}</div>
+
+      <div *ngIf="!ordersLoading() && displayedRows().length === 0" class="pf-empty">
+        <ng-container [ngSwitch]="activeTab()">
+          <span *ngSwitchCase="'positions'">{{ 'DASHBOARD.NO_POSITIONS' | translate }}</span>
+          <span *ngSwitchDefault>{{ 'DASHBOARD.NO_HISTORY' | translate }}</span>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

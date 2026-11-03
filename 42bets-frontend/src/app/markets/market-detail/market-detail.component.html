@@ -1,0 +1,142 @@
+<section class="ev-page">
+  <a routerLink="/markets" class="ev-back">
+    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+      <path d="M12.5 4.5 7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    {{ 'MARKETS.PANEL_DASHBOARD_LINK' | translate }} · {{ 'MARKETS.LIST_HEADING' | translate }}
+  </a>
+
+  <ng-container *ngIf="orderBook() as book; else stateTpl">
+    <header class="ev-head">
+      <span class="ev-avatar" [style.background]="avatarGradient(book.market.id)" aria-hidden="true">{{ categoryEmoji(book.market.category) }}</span>
+      <div class="ev-head-text">
+        <span class="ev-cat">{{ book.market.category }}</span>
+        <h1 class="ev-title">{{ book.market | marketQuestion }}</h1>
+        <div class="ev-meta">
+          <span>{{ book.market.openOrderCount }} {{ 'MARKETS.ORDERS_SUFFIX' | translate }}</span>
+          <span *ngIf="book.market.endDate">{{ book.market.endDate | date:'dd/MM/yyyy' }}</span>
+          <span *ngIf="book.market.resolved" class="ev-resolved">{{ 'MARKETS.RESOLVED_PREFIX' | translate }}{{ book.market.resolvedOutcome }}</span>
+        </div>
+      </div>
+      <div class="ev-chance">
+        <span class="ev-chance-value">{{ book.market.yesProbability | number: '1.0-0' }}%</span>
+        <span class="ev-chance-label">{{ 'MARKETS.YES' | translate }}</span>
+      </div>
+    </header>
+
+    <div class="ev-grid">
+      <div class="ev-main">
+        <section class="ev-card">
+          <p class="ev-desc" *ngIf="book.market.description">{{ book.market.description }}</p>
+
+          <div class="ev-bar"><span class="ev-bar-fill" [style.width.%]="book.market.yesProbability"></span></div>
+
+          <div class="ev-metrics">
+            <article>
+              <span>{{ 'MARKETS.YES' | translate }}</span>
+              <strong>{{ book.market.yesProbability | number: '1.0-0' }}%</strong>
+            </article>
+            <article>
+              <span>{{ 'MARKETS.LIQUIDITY_YES' | translate }}</span>
+              <strong>{{ book.market.yesLiquidity | number: '1.0-2' }}</strong>
+            </article>
+            <article>
+              <span>{{ 'MARKETS.LIQUIDITY_NO' | translate }}</span>
+              <strong>{{ book.market.noLiquidity | number: '1.0-2' }}</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="ev-orderbook">
+          <article class="ev-book ev-book-yes">
+            <div class="ev-book-head">
+              <span class="ev-pill ev-pill-yes">{{ 'MARKETS.YES' | translate }}</span>
+              <h3>{{ 'MARKETS.BUY_PRESSURE' | translate }}</h3>
+            </div>
+            <div class="ev-levels" *ngIf="book.yesLevels.length; else emptyYes">
+              <div class="ev-level" *ngFor="let level of book.yesLevels">
+                <strong>{{ level.price | number: '1.0-2' }}%</strong>
+                <span>{{ level.amount | number: '1.0-2' }}</span>
+                <small>{{ level.orderCount }} {{ 'MARKETS.ORDERS_SUFFIX' | translate }}</small>
+              </div>
+            </div>
+            <ng-template #emptyYes><p class="ev-empty">{{ 'MARKETS.EMPTY_YES_ORDERS' | translate }}</p></ng-template>
+          </article>
+
+          <article class="ev-book ev-book-no">
+            <div class="ev-book-head">
+              <span class="ev-pill ev-pill-no">{{ 'MARKETS.NO' | translate }}</span>
+              <h3>{{ 'MARKETS.SELL_PRESSURE' | translate }}</h3>
+            </div>
+            <div class="ev-levels" *ngIf="book.noLevels.length; else emptyNo">
+              <div class="ev-level" *ngFor="let level of book.noLevels">
+                <strong>{{ level.price | number: '1.0-2' }}%</strong>
+                <span>{{ level.amount | number: '1.0-2' }}</span>
+                <small>{{ level.orderCount }} {{ 'MARKETS.ORDERS_SUFFIX' | translate }}</small>
+              </div>
+            </div>
+            <ng-template #emptyNo><p class="ev-empty">{{ 'MARKETS.EMPTY_NO_ORDERS' | translate }}</p></ng-template>
+          </article>
+        </section>
+      </div>
+
+      <aside class="ev-side">
+        <section class="ev-order">
+          <div class="ev-order-sides">
+            <button type="button" class="ev-side-btn ev-side-yes" [class.active]="side() === 'YES'" (click)="setSide('YES')">
+              <span>{{ 'MARKETS.YES' | translate }}</span>
+              <strong>{{ orderBook()!.market.yesProbability | number: '1.0-0' }}%</strong>
+            </button>
+            <button type="button" class="ev-side-btn ev-side-no" [class.active]="side() === 'NO'" (click)="setSide('NO')">
+              <span>{{ 'MARKETS.NO' | translate }}</span>
+              <strong>{{ (100 - orderBook()!.market.yesProbability) | number: '1.0-0' }}%</strong>
+            </button>
+          </div>
+
+          <label class="ev-field">
+            {{ 'MARKETS.PRICE_LABEL' | translate }}
+            <input type="number" min="0.01" max="100" step="0.01" [ngModel]="price()" (ngModelChange)="price.set(+$event)" />
+          </label>
+
+          <label class="ev-field">
+            {{ 'MARKETS.AMOUNT_LABEL' | translate }}
+            <input type="number" min="1" step="1" [ngModel]="amount()" (ngModelChange)="amount.set(+$event)" />
+          </label>
+
+          <button type="button" class="ev-submit" [disabled]="placingOrder() || !isAuthenticated() || book.market.resolved || isMarketExpired(book.market)" (click)="placeOrder()">
+            {{ placingOrder() ? ('MARKETS.PLACING_ORDER' | translate) : ('MARKETS.PLACE_ORDER' | translate) }}
+          </button>
+
+          <p *ngIf="!isAuthenticated()" class="ev-note">{{ 'MARKETS.AUTH_NOTE' | translate }}</p>
+          <p *ngIf="book.market.resolved" class="ev-note">{{ 'MARKETS.RESOLVED_PREFIX' | translate }}{{ book.market.resolvedOutcome }}</p>
+          <p *ngIf="!book.market.resolved && isMarketExpired(book.market)" class="ev-note">{{ 'MARKETS.CLOSED_NOTE' | translate }}</p>
+          <p *ngIf="error()" class="ev-error">{{ error() }}</p>
+        </section>
+
+        <section class="ev-consent">
+          <h3>{{ 'MARKETS.ORDER_PANEL_TITLE' | translate }}</h3>
+          <p>{{ 'MARKETS.CONSENT_TEXT' | translate }}</p>
+          <div class="ev-consent-actions" *ngIf="!isAuthenticated() || canManageConsent(); else consentUnavailableTpl">
+            <button type="button" class="ev-consent-enable" [disabled]="consentInProgress() || consentGranted() || !isAuthenticated()" (click)="enableMarketConsent()">
+              {{ consentGranted() ? ('MARKETS.CONSENT_ENABLED' | translate) : ('MARKETS.CONSENT_ALLOW' | translate) }}
+            </button>
+            <button type="button" class="ev-consent-revoke" [disabled]="consentInProgress() || !consentGranted() || !isAuthenticated()" (click)="revokeMarketConsent()">
+              {{ 'MARKETS.CONSENT_REVOKE' | translate }}
+            </button>
+          </div>
+          <ng-template #consentUnavailableTpl>
+            <p class="ev-note">{{ 'MARKETS.CONSENT_UNAVAILABLE' | translate }}</p>
+          </ng-template>
+          <p *ngIf="consentMessage()" class="ev-consent-msg">{{ consentMessage() }}</p>
+        </section>
+      </aside>
+    </div>
+  </ng-container>
+
+  <ng-template #stateTpl>
+    <div class="ev-state">
+      <p *ngIf="loading()">{{ 'MARKETS.STAT_MARKETS' | translate }}…</p>
+      <p *ngIf="!loading() && error()" class="ev-error">{{ error() }}</p>
+    </div>
+  </ng-template>
+</section>

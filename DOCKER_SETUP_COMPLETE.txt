@@ -1,0 +1,229 @@
+doc✅ DOCKER SETUP COMPLETE
+========================
+
+## 📦 Fichiers Créés (7 fichiers + 2 répertoires mis à jour)
+
+### Root (c:\Users\arthu\OneDrive\Bureau\transcendence\)
+```
+✅ docker-compose.yml         [418 lines] - Orchestration complète
+✅ .env.example               [26 lines]  - Variables d'environnement
+✅ DOCKER_GUIDE.md            [400+ lines] - Guide complet Docker
+✅ QUICK_START_DOCKER.md      [150 lines] - Démarrage rapide
+```
+
+### Backend (transcendence/)
+```
+✅ Dockerfile                 [26 lines]  - Build multi-stage (Maven → Alpine)
+✅ .dockerignore              [12 lines]  - Optimization
+✅ src/main/resources/application.properties [UPDATED]
+   └─ Utilise maintenant les variables d'environnement
+```
+
+### Frontend (42bets-frontend/)
+```
+✅ Dockerfile                 [26 lines]  - Build multi-stage (Node → Nginx)
+✅ nginx.conf                 [110 lines] - Proxy + security headers
+✅ .dockerignore              [11 lines]  - Optimization
+```
+
+---
+
+## 🎯 Architecture Docker
+
+```
+┌─────────────────────────────────────┐
+│  docker-compose up --build          │ ← UNE SEULE COMMANDE
+└─────────────────────────────────────┘
+            │
+            ├──→ Frontend Service (nginx)
+            │     Port: 4200
+            │     - Sert Angular compiled
+            │     - Proxy /api vers backend
+            │     - Security headers
+            │
+            ├──→ Backend Service (Spring Boot)
+            │     Port: 8080
+            │     - API REST
+            │     - JWT Authentication
+            │     - Attend la BD
+            │
+            └──→ Database Service (PostgreSQL)
+                  Port: 5432
+                  - persistence BD avec volumes
+```
+
+---
+
+## 🚀 Comment Ça Marche
+
+### 1️⃣ BUILD (première fois - ~3 min)
+```bash
+docker-compose up --build
+```
+- Compile le backend (Maven)
+- Compile le frontend (Angular/Webpack)
+- Crée les images Docker
+- Démarre les 3 services
+
+### 2️⃣ WAIT (~20 secondes)
+- Healthchecks assurent que tous les services sont prêts
+- Backend attend que la BD soit accessible
+- Frontend attend que le backend soit prêt
+
+### 3️⃣ READY
+```
+Frontend:  http://localhost:4200  ✅
+Backend:   http://localhost:8080  ✅
+Database:  postgresql://localhost:5432 ✅
+```
+
+---
+
+## ⚙️ Configuration
+
+### Variables d'Environnement (.env)
+```bash
+# À la racine du projet
+cp .env.example .env
+
+# Puis éditer .env pour:
+# - JWT_SECRET (minimum 32 caractères)
+# - POSTGRES_PASSWORD
+# - Autres credentials
+```
+
+### application.properties (Backend)
+```properties
+# Maintenant utilise les variables d'env:
+spring.datasource.url=${SPRING_DATASOURCE_URL:...}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME:...}
+jwt.secret=${JWT_SECRET:...}
+```
+
+---
+
+## ✅ Checklist Avant de Démarrer
+
+- [ ] Docker Desktop installé
+- [ ] Terminal ouvert dans le répertoire racine
+- [ ] Fichier docker-compose.yml existe
+- [ ] Les 2 Dockerfiles existent
+- [ ] application.properties mise à jour
+
+---
+
+## 🧪 TESTER
+
+### Démarrer les services
+```bash
+cd c:\Users\arthu\OneDrive\Bureau\transcendence
+docker-compose up --build
+```
+
+### Vérifier
+```bash
+# Dans un autre terminal
+
+# 1. Frontend charge?
+curl http://localhost:4200
+
+# 2. Backend répond?
+curl http://localhost:8080/auth/login
+
+# 3. BD connectée?
+docker-compose exec db psql -U transcendence_user -d transcendence -c "SELECT 1;"
+
+# 4. Tous les services sains?
+docker-compose ps
+
+# 5. Voir les logs
+docker-compose logs -f
+```
+
+---
+
+## 🛑 Arrêter
+
+```bash
+# Graceful stop (Ctrl+C dans le terminal docker-compose up)
+# OU dans un autre terminal:
+docker-compose down
+
+# Nettoyer TOUT (incluant BD)
+docker-compose down -v
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### "Docker not found"
+→ Installer Docker Desktop
+
+### "Port 4200 already in use"
+→ Changer port dans docker-compose.yml ou kill le processus
+
+### "Cannot connect to database"
+→ Attendre ~10 sec, les healthchecks confirment quand c'est prêt
+
+### "Frontend shows blank page"
+→ Vérifier logs: `docker-compose logs frontend`
+→ Rebuild: `docker-compose down -v && docker-compose up --build`
+
+### "Backend 500 error"
+→ Vérifier logs: `docker-compose logs backend`
+→ Vérifier variables d'env
+
+---
+
+## 📚 Documentation
+
+- **DOCKER_GUIDE.md** - Guide complet (configurations prod, sécurité, etc)
+- **QUICK_START_DOCKER.md** - Référence rapide
+- **docker-compose.yml** - Commenté
+
+---
+
+## 🎓 RAPPEL: Stack Technique
+
+**Frontend:**
+- Angular 21 + TypeScript
+- Nginx (reverse proxy)
+- Port 4200
+
+**Backend:**
+- Spring Boot 3.5.13
+- Java 17
+- Port 8080
+
+**Database:**
+- PostgreSQL 15 Alpine
+- Persistent volume
+- Port 5432
+
+---
+
+## 📝 PROCHAINES ÉTAPES
+
+1. ✅ **MAINTENANT** : Tester `docker-compose up --build`
+2. ✅ **ENSUITE** : Vérifier que tout charge sur localhost:4200
+3. ⏳ **EVALUATION** : Tout doit marcher en UNE COMMANDE
+4. 🔐 **PRODUCTION** : Changer JWT_SECRET + CORS + HTTPS
+
+---
+
+## 🎉 RÉSUMÉ
+
+Vous avez maintenant:
+✅ Un docker-compose.yml qui lance 3 services
+✅ Des Dockerfiles optimisés pour backend et frontend
+✅ Configuration externalisée (.env)
+✅ Documentation complète
+✅ One-command deployment pour l'évaluation
+
+**La prochaine fois que vous testez, vous n'avez besoin que de:**
+```bash
+docker-compose up
+```
+
+Et tout marche! 🚀

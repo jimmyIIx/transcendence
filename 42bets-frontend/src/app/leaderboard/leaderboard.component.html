@@ -1,0 +1,73 @@
+<section class="lb-page">
+  <div class="lb-shell">
+    <header class="lb-hero">
+      <p class="lb-kicker">{{ 'LEADERBOARD.KICKER' | translate }}</p>
+      <h1>{{ 'LEADERBOARD.TITLE' | translate }}</h1>
+      <p class="lb-lead">{{ 'LEADERBOARD.SUBTITLE' | translate }}</p>
+    </header>
+
+    <section class="lb-cards" [attr.aria-label]="'LEADERBOARD.CARDS_ARIA' | translate">
+      <article class="lb-card">
+        <p class="lb-card-label">{{ 'LEADERBOARD.CARD_PARTICIPANTS' | translate }}</p>
+        <p class="lb-card-value">{{ participantCount() }}</p>
+      </article>
+
+      <article class="lb-card">
+        <p class="lb-card-label">{{ 'LEADERBOARD.CARD_TOP_PNL' | translate }}</p>
+        <p class="lb-card-value" [class.lb-up]="topPnl() > 0" [class.lb-down]="topPnl() < 0">
+          {{ topPnl() >= 0 ? '+' : '' }}{{ topPnl() | number: '1.2-2' }}
+        </p>
+      </article>
+
+      <article class="lb-card">
+        <p class="lb-card-label">{{ 'LEADERBOARD.CARD_AVG_PNL' | translate }}</p>
+        <p class="lb-card-value" [class.lb-up]="avgPnl() > 0" [class.lb-down]="avgPnl() < 0">
+          {{ avgPnl() >= 0 ? '+' : '' }}{{ avgPnl() | number: '1.2-2' }}
+        </p>
+      </article>
+    </section>
+
+    <p *ngIf="error()" class="lb-error">{{ error() }}</p>
+
+    <div class="lb-table-wrap">
+      <table class="lb-table" *ngIf="!loading() && entries().length > 0">
+        <thead>
+          <tr>
+            <th>{{ 'LEADERBOARD.TH_RANK' | translate }}</th>
+            <th>{{ 'LEADERBOARD.TH_USER' | translate }}</th>
+            <th class="lb-num">{{ 'LEADERBOARD.TH_PNL' | translate }}</th>
+            <th class="lb-num">{{ 'LEADERBOARD.TH_WINRATE' | translate }}</th>
+            <th class="lb-num">{{ 'LEADERBOARD.TH_BETS' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of entries(); let i = index">
+            <td>
+              <span class="lb-rank" [class.lb-rank-top]="i < 3">#{{ i + 1 }}</span>
+            </td>
+            <td>
+              <div class="lb-user">
+                <img
+                  *ngIf="entry.avatarUrl"
+                  [src]="entry.avatarUrl"
+                  [alt]="entry.username"
+                  class="lb-avatar"
+                />
+                <span *ngIf="!entry.avatarUrl" class="lb-avatar lb-avatar-fallback">{{ initials(entry.username) }}</span>
+                <span class="lb-username">{{ entry.username }}</span>
+              </div>
+            </td>
+            <td class="lb-num" [class.lb-up]="entry.pnl > 0" [class.lb-down]="entry.pnl < 0">
+              {{ entry.pnl >= 0 ? '+' : '' }}{{ entry.pnl | number: '1.2-2' }}
+            </td>
+            <td class="lb-num">{{ winRate(entry) | number: '1.0-1' }}%</td>
+            <td class="lb-num">{{ entry.settledBets }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="loading()" class="lb-empty">{{ 'LEADERBOARD.LOADING' | translate }}</div>
+      <div *ngIf="!loading() && entries().length === 0" class="lb-empty">{{ 'LEADERBOARD.EMPTY' | translate }}</div>
+    </div>
+  </div>
+</section>

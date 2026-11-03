@@ -1,0 +1,507 @@
+<div class="admin-page">
+  <section class="admin-hero">
+    <div>
+      <p class="admin-kicker">{{ 'ADMIN.KICKER' | translate }}</p>
+      <h1>{{ 'ADMIN.TITLE' | translate }}</h1>
+      <p class="admin-subtitle">{{ 'ADMIN.SUBTITLE' | translate }}</p>
+    </div>
+
+    <div class="tab-switcher" [attr.aria-label]="'ADMIN.TITLE' | translate">
+      <button type="button" [class.active]="activeTab === 'users'" (click)="setTab('users')">
+        {{ 'ADMIN.TAB_USERS' | translate }}
+      </button>
+      <button type="button" [class.active]="activeTab === 'markets'" (click)="setTab('markets')">
+        {{ 'ADMIN.TAB_MARKETS' | translate }}
+      </button>
+    </div>
+  </section>
+
+  <section class="stats-grid">
+    <app-ui-stat-tile className="stat-card" labelClass="stat-label" valueClass="stat-value" [label]="'ADMIN.STAT_ACCOUNTS' | translate" [value]="'' + users.length" />
+    <app-ui-stat-tile className="stat-card" labelClass="stat-label" valueClass="stat-value" [label]="'ADMIN.STAT_EMAILS_CONFIRMED' | translate" [value]="'' + users.filter(u => u.emailVerified).length" />
+    <app-ui-stat-tile className="stat-card" labelClass="stat-label" valueClass="stat-value" [label]="'ADMIN.STAT_MARKETS' | translate" [value]="'' + markets.length" />
+    <app-ui-stat-tile className="stat-card" labelClass="stat-label" valueClass="stat-value" [label]="'ADMIN.STAT_OPEN_MARKETS' | translate" [value]="'' + markets.filter(m => !m.resolved).length" />
+  </section>
+
+  <section *ngIf="activeTab === 'users'" class="admin-panel users-panel">
+    <div class="panel-header">
+      <h2>{{ 'ADMIN.USERS_TITLE' | translate }}</h2>
+      <div class="panel-actions">
+        <button (click)="loadUsers()" class="admin-btn admin-btn-refresh">{{ 'ADMIN.BTN_REFRESH' | translate }}</button>
+        <button (click)="openCreateModal()" class="admin-btn admin-btn-primary">{{ 'ADMIN.BTN_CREATE_USER' | translate }}</button>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="banner loading">{{ 'ADMIN.LOADING' | translate }}</div>
+    <div *ngIf="error" class="banner error">{{ error }}</div>
+
+    <div class="table-shell" *ngIf="users.length > 0">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>{{ 'ADMIN.TH_ID' | translate }}</th>
+            <th>{{ 'ADMIN.TH_USERNAME' | translate }}</th>
+            <th>{{ 'ADMIN.TH_EMAIL' | translate }}</th>
+            <th>{{ 'ADMIN.TH_EMAIL_CONFIRMED' | translate }}</th>
+            <th>{{ 'ADMIN.TH_ROLE' | translate }}</th>
+            <th>
+              <span class="balance-header-inline">
+                <span>{{ 'ADMIN.TH_BALANCE' | translate }}</span>
+                <img src="/token42.png" [alt]="'ADMIN.TOKEN_ALT' | translate" class="token-inline-icon" />
+              </span>
+            </th>
+            <th>{{ 'ADMIN.TH_WALLET' | translate }}</th>
+            <th>{{ 'ADMIN.TH_ACTIONS' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users">
+            <td>{{ user.id }}</td>
+            <td class="cell-strong">{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <div class="email-cell">
+                <app-ui-badge
+                  [className]="'status-badge ' + (user.emailVerified ? 'status-on' : 'status-off')"
+                >
+                  {{ user.emailVerified ? ('ADMIN.STATUS_CONFIRMED' | translate) : ('ADMIN.STATUS_PENDING' | translate) }}
+                </app-ui-badge>
+
+                <button
+                  class="admin-btn admin-btn-inline"
+                  [disabled]="user.emailVerified"
+                  (click)="send_email(user.id, user.email)"
+                >
+                  {{ user.emailVerified ? ('ADMIN.BTN_EMAIL_CONFIRMED' | translate) : ('ADMIN.BTN_SEND_EMAIL' | translate) }}
+                </button>
+              </div>
+            </td>
+            <td>
+              <app-ui-badge className="role-pill">{{ user.role }}</app-ui-badge>
+            </td>
+            <td>
+              <div class="balance-cell">
+                <span class="balance-value">
+                  {{ user.balance | number: '1.2-2' }}
+                  <img src="/token42.png" [alt]="'ADMIN.TOKEN_ALT' | translate" class="token-inline-icon" />
+                </span>
+                <button class="admin-btn admin-btn-inline" (click)="openBalanceModal(user)">+/-</button>
+              </div>
+            </td>
+            <td class="wallet-cell">
+              <span *ngIf="user.walletAddress" class="wallet-addr" [title]="user.walletAddress">
+                {{ user.walletAddress.slice(0, 6) }}…{{ user.walletAddress.slice(-4) }}
+              </span>
+              <span *ngIf="!user.walletAddress" class="wallet-none">—</span>
+            </td>
+            <td>
+              <div class="action-stack">
+                <button class="admin-btn admin-btn-inline" (click)="openDetailsModal(user)">{{ 'ADMIN.BTN_VIEW_DETAILS' | translate }}</button>
+                <button class="admin-btn admin-btn-inline" (click)="openEditModal(user)">{{ 'ADMIN.BTN_EDIT' | translate }}</button>
+                <button class="admin-btn admin-btn-danger" (click)="deleteUser(user.id)">{{ 'ADMIN.BTN_DELETE' | translate }}</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p *ngIf="users.length === 0 && !loading" class="empty-state">{{ 'ADMIN.EMPTY_USERS' | translate }}</p>
+  </section>
+
+  <section *ngIf="activeTab === 'markets'" class="admin-panel markets-panel">
+    <div class="panel-header">
+      <h2>{{ 'ADMIN.TAB_MARKETS' | translate }}</h2>
+      <div class="panel-actions">
+        <button (click)="loadMarkets()" class="admin-btn admin-btn-refresh">{{ 'ADMIN.BTN_REFRESH_MARKETS' | translate }}</button>
+        <button (click)="generateMarkets()" class="btn-primary">{{ 'ADMIN.BTN_GENERATE_MARKETS' | translate }}</button>
+        <button (click)="openCreateMarketModal()" class="btn-primary admin-btn-create-market">{{ 'ADMIN.BTN_CREATE_MARKET' | translate }}</button>
+      </div>
+    </div>
+
+    <div *ngIf="marketsLoading" class="banner loading">{{ 'ADMIN.LOADING_MARKETS' | translate }}</div>
+    <div *ngIf="marketsError" class="banner error">{{ marketsError }}</div>
+    <div *ngIf="generationResult" class="banner success">{{ generationResult }}</div>
+
+    <div class="table-shell" *ngIf="markets.length > 0">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>{{ 'ADMIN.TH_ID' | translate }}</th>
+            <th>{{ 'ADMIN.TH_QUESTION' | translate }}</th>
+            <th>{{ 'ADMIN.TH_CATEGORY' | translate }}</th>
+            <th>{{ 'ADMIN.TH_SOURCE' | translate }}</th>
+            <th>{{ 'ADMIN.TH_YES_PERCENT' | translate }}</th>
+            <th>{{ 'ADMIN.TH_ORDERS' | translate }}</th>
+            <th>{{ 'ADMIN.TH_END_DATE' | translate }}</th>
+            <th>{{ 'ADMIN.TH_STATUS' | translate }}</th>
+            <th>{{ 'ADMIN.TH_ACTIONS' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let market of markets">
+            <td>{{ market.id }}</td>
+            <td>
+              <div class="market-question-line">
+                <span class="market-question">{{ market | marketQuestion }}</span>
+                <small>{{ market.description }}</small>
+              </div>
+            </td>
+            <td>{{ getCategoryLabel(market.category) }}</td>
+            <td>{{ market.sourceSystem }}</td>
+            <td>{{ market.yesProbability | number: '1.0-2' }}%</td>
+            <td>{{ market.openOrderCount }}</td>
+            <td>{{ market.endDate ? (market.endDate | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+            <td>
+              <span
+                class="status-badge market-status-badge"
+                [class.status-on]="!market.resolved && !isMarketExpired(market)"
+                [class.status-off]="market.resolved"
+                [class.status-closed]="isMarketExpired(market)"
+              >
+                <ng-container *ngIf="market.resolved">
+                  <span class="market-status-label">{{ 'ADMIN.STATUS_RESOLVED' | translate }}</span>
+                  <span class="market-status-outcome">{{ market.resolvedOutcome === 'YES' ? ('MARKETS.YES' | translate) : ('MARKETS.NO' | translate) }}</span>
+                </ng-container>
+                <ng-container *ngIf="!market.resolved && isMarketExpired(market)">{{ 'ADMIN.STATUS_CLOSED' | translate }}</ng-container>
+                <ng-container *ngIf="!market.resolved && !isMarketExpired(market)">{{ 'ADMIN.STATUS_OPEN' | translate }}</ng-container>
+              </span>
+            </td>
+            <td>
+              <div class="action-stack">
+                <ng-container *ngIf="!market.resolved">
+                  <button class="btn-primary admin-btn-outcome-yes" (click)="resolveMarket(market, 'YES')">{{ 'MARKETS.YES' | translate }}</button>
+                  <button class="btn-primary admin-btn-outcome-no" (click)="resolveMarket(market, 'NO')">{{ 'MARKETS.NO' | translate }}</button>
+                </ng-container>
+                <ng-container *ngIf="market.resolved">
+                  <button
+                    class="admin-btn admin-btn-danger admin-btn-icon"
+                    (click)="deleteMarket(market)"
+                    [attr.aria-label]="'ADMIN.BTN_DELETE' | translate"
+                    [title]="'ADMIN.BTN_DELETE' | translate"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                      <path
+                        d="M9 3h6a1 1 0 0 1 1 1v1h4a1 1 0 1 1 0 2h-1v12a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V7H4a1 1 0 0 1 0-2h4V4a1 1 0 0 1 1-1Zm1 2h4V5h-4Zm-3 2v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V7H7Zm3 2a1 1 0 0 1 1 1v7a1 1 0 1 1-2 0v-7a1 1 0 0 1 1-1Zm4 0a1 1 0 0 1 1 1v7a1 1 0 1 1-2 0v-7a1 1 0 0 1 1-1Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p *ngIf="markets.length === 0 && !marketsLoading" class="empty-state">{{ 'ADMIN.EMPTY_MARKETS' | translate }}</p>
+  </section>
+</div>
+
+<!-- Modal Balance -->
+<div class="modal-overlay" *ngIf="showBalanceModal" (click)="closeBalanceModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ 'ADMIN.MODAL_BALANCE_TITLE' | translate: {username: balanceTargetUser?.username} }}</h2>
+      <button class="close-btn" (click)="closeBalanceModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        {{ 'ADMIN.MODAL_BALANCE_CURRENT' | translate }}
+        <strong class="balance-amount-inline">
+          {{ balanceTargetUser?.balance | number: '1.2-2' }}
+          <img src="/token42.png" [alt]="'ADMIN.TOKEN_ALT' | translate" class="token-inline-icon" />
+        </strong>
+      </p>
+      <div class="form-group">
+        <label for="balance-delta">{{ 'ADMIN.MODAL_BALANCE_LABEL' | translate }}</label>
+        <input
+          id="balance-delta"
+          type="number"
+          [(ngModel)]="balanceDelta"
+          name="balanceDelta"
+          class="form-control"
+          [placeholder]="'ADMIN.MODAL_BALANCE_PLACEHOLDER' | translate"
+          step="0.01"
+          [attr.aria-label]="'ADMIN.MODAL_BALANCE_AMOUNT_ARIA' | translate"
+        />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="admin-btn admin-btn-ghost" (click)="closeBalanceModal()">{{ 'ADMIN.BTN_CANCEL' | translate }}</button>
+      <button class="admin-btn admin-btn-primary" (click)="submitBalance()" [disabled]="balanceDelta === 0">
+        {{ 'ADMIN.BTN_CONFIRM' | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Popup Edit/Create -->
+<div class="modal-overlay" *ngIf="showEditModal || showCreateModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ modalMode === 'edit' ? ('ADMIN.MODAL_EDIT_TITLE' | translate) : ('ADMIN.MODAL_CREATE_TITLE' | translate) }}</h2>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="username-input">{{ 'ADMIN.FIELD_USERNAME' | translate }}</label>
+        <input
+          id="username-input"
+          type="text"
+          [(ngModel)]="formData.username"
+          name="username"
+          class="form-control"
+          [placeholder]="'ADMIN.PLACEHOLDER_USERNAME' | translate"
+          [attr.aria-label]="'ADMIN.ARIA_USERNAME' | translate"
+        />
+      </div>
+
+      <div class="form-group" *ngIf="modalMode === 'create'">
+        <label for="password-input">{{ 'ADMIN.FIELD_PASSWORD' | translate }}</label>
+        <input
+          id="password-input"
+          type="password"
+          [(ngModel)]="formData.password"
+          name="password"
+          [placeholder]="'ADMIN.PLACEHOLDER_PASSWORD' | translate"
+          required
+          class="form-control"
+          [attr.aria-label]="'ADMIN.ARIA_PASSWORD' | translate"
+        />
+      </div>
+
+      <div class="form-group" *ngIf="modalMode === 'edit'">
+        <label for="password-input-edit">{{ 'ADMIN.FIELD_PASSWORD_EDIT' | translate }}</label>
+        <input
+          id="password-input-edit"
+          type="password"
+          [(ngModel)]="formData.password"
+          name="passwordEdit"
+          [placeholder]="'ADMIN.PLACEHOLDER_PASSWORD_EDIT' | translate"
+          class="form-control"
+          [attr.aria-label]="'ADMIN.ARIA_PASSWORD_EDIT' | translate"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="email-input">{{ 'ADMIN.FIELD_EMAIL' | translate }}</label>
+        <input
+          id="email-input"
+          type="email"
+          [(ngModel)]="formData.email"
+          name="email"
+          class="form-control"
+          [placeholder]="'ADMIN.PLACEHOLDER_EMAIL' | translate"
+          [attr.aria-label]="'ADMIN.ARIA_EMAIL' | translate"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="role-select">{{ 'ADMIN.FIELD_ROLE' | translate }}</label>
+        <select
+          id="role-select"
+          [(ngModel)]="formData.role"
+          name="role"
+          class="form-control"
+          [attr.aria-label]="'ADMIN.ARIA_ROLE' | translate"
+        >
+          <option value="">{{ 'ADMIN.ROLE_SELECT_PLACEHOLDER' | translate }}</option>
+          <option value="USER">{{ 'ADMIN.ROLE_USER' | translate }}</option>
+          <option value="ADMIN">{{ 'ADMIN.ROLE_ADMIN' | translate }}</option>
+          <option value="MODERATOR">{{ 'ADMIN.ROLE_MODERATOR' | translate }}</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="modalMode === 'edit'">
+        <label for="email-verified-toggle">{{ 'ADMIN.FIELD_EMAIL_VERIFIED' | translate }}</label>
+        <div class="toggle-row">
+          <input
+            id="email-verified-toggle"
+            type="checkbox"
+            [(ngModel)]="formData.emailVerified"
+            name="emailVerified"
+            class="toggle-checkbox"
+            [attr.aria-label]="'ADMIN.ARIA_EMAIL_VERIFIED' | translate"
+          />
+          <span
+            class="toggle-state"
+            [class.state-green]="formData.emailVerified"
+            [class.state-red]="!formData.emailVerified"
+          >
+            {{ formData.emailVerified ? ('ADMIN.STATUS_CONFIRMED' | translate) : ('ADMIN.STATUS_NOT_CONFIRMED' | translate) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="admin-btn admin-btn-ghost" (click)="closeModal()">{{ 'ADMIN.BTN_CANCEL' | translate }}</button>
+      <button class="admin-btn admin-btn-primary" (click)="saveUser()">
+        {{ modalMode === 'edit' ? ('ADMIN.BTN_SAVE' | translate) : ('ADMIN.BTN_CREATE' | translate) }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Details modal -->
+<div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ 'ADMIN.MODAL_DETAILS_TITLE' | translate }}</h2>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="detailsLoading" class="loading">
+        {{ 'ADMIN.LOADING_DETAILS' | translate }}
+      </div>
+
+      <div *ngIf="!detailsLoading && userDetails" class="detail-grid">
+        <h1>{{ 'ADMIN.MODAL_DETAILS_TITLE' | translate }}</h1>
+        <div><strong>{{ 'ADMIN.DETAIL_ID' | translate }}</strong> {{ userDetails.id }}</div>
+        <div><strong>{{ 'ADMIN.DETAIL_USERNAME' | translate }}</strong> {{ userDetails.username }}</div>
+        <div><strong>{{ 'ADMIN.DETAIL_EMAIL' | translate }}</strong> {{ userDetails.email }}</div>
+        <div><strong>{{ 'ADMIN.DETAIL_ROLE' | translate }}</strong> {{ userDetails.role }}</div>
+        <div><strong>{{ 'ADMIN.DETAIL_EMAIL_VERIFIED' | translate }}</strong> {{ userDetails.emailVerified ? ('ADMIN.YES' | translate) : ('ADMIN.NO' | translate) }}</div>
+        <div><strong>{{ 'ADMIN.DETAIL_OAUTH_PROVIDER' | translate }}</strong> {{ userDetails.oauthProvider || ('ADMIN.DETAIL_NA' | translate) }}</div>
+        <div><strong>{{ 'ADMIN.DETAIL_PROVIDER_ID' | translate }}</strong> {{ userDetails.oauthProviderId || ('ADMIN.DETAIL_NA' | translate) }}</div>
+        <div><strong>{{ 'ADMIN.DETAIL_AVATAR_URL' | translate }}</strong> {{ userDetails.avatarUrl || ('ADMIN.DETAIL_NA' | translate) }}</div>
+        <div><strong>{{ 'ADMIN.DETAIL_CREATED_AT' | translate }}</strong> {{ userDetails.createdAt || ('ADMIN.DETAIL_NA' | translate) }}</div>
+        <div><strong>{{ 'ADMIN.DETAIL_UPDATED_AT' | translate }}</strong> {{ userDetails.updatedAt || ('ADMIN.DETAIL_NA' | translate) }}</div>
+      </div>
+
+      <div *ngIf="!detailsLoading && !userDetails" class="error">
+        {{ 'ADMIN.DETAIL_ERROR' | translate }}
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="admin-btn admin-btn-ghost" (click)="closeModal()">{{ 'ADMIN.BTN_CLOSE' | translate }}</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Market modal -->
+<div class="modal-overlay" *ngIf="showCreateMarketModal" (click)="closeCreateMarketModal()">
+  <div class="modal-content modal-content-wide" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ 'ADMIN.MODAL_CREATE_MARKET_TITLE' | translate }}</h2>
+      <button class="close-btn" (click)="closeCreateMarketModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>{{ 'ADMIN.MARKET_FIELD_QUESTION' | translate }} <span class="required">{{ 'ADMIN.MARKET_FIELD_REQUIRED' | translate }}</span></label>
+        <input
+          type="text"
+          [(ngModel)]="marketForm.question"
+          [placeholder]="'ADMIN.MARKET_PLACEHOLDER_QUESTION' | translate"
+          class="form-control"
+          maxlength="300"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'ADMIN.MARKET_FIELD_CATEGORY' | translate }} <span class="required">{{ 'ADMIN.MARKET_FIELD_REQUIRED' | translate }}</span></label>
+        <input
+          type="text"
+          [(ngModel)]="marketForm.category"
+          (ngModelChange)="onCategoryChanged($event)"
+          list="category-suggestions"
+          [placeholder]="'ADMIN.MARKET_PLACEHOLDER_CATEGORY' | translate"
+          class="form-control"
+        />
+        <datalist id="category-suggestions">
+          <option value="PROGRESSION">{{ 'ADMIN.CAT_OPTION_PROGRESSION' | translate }}</option>
+          <option value="EXAM">{{ 'ADMIN.CAT_OPTION_EXAM' | translate }}</option>
+          <option value="PROJECT">{{ 'ADMIN.CAT_OPTION_PROJECT' | translate }}</option>
+          <option value="EXP">{{ 'ADMIN.CAT_OPTION_EXP' | translate }}</option>
+          <option value="CAREER">{{ 'ADMIN.CAT_OPTION_CAREER' | translate }}</option>
+          <option value="COMMUNITY">{{ 'ADMIN.CAT_OPTION_COMMUNITY' | translate }}</option>
+          <option value="GENERAL">{{ 'ADMIN.CAT_OPTION_GENERAL' | translate }}</option>
+        </datalist>
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'ADMIN.MARKET_FIELD_DESCRIPTION' | translate }}</label>
+        <textarea
+          [(ngModel)]="marketForm.description"
+          [placeholder]="'ADMIN.MARKET_PLACEHOLDER_DESCRIPTION' | translate"
+          class="form-control"
+          rows="3"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'ADMIN.MARKET_FIELD_END_DATE' | translate }}</label>
+        <input
+          type="datetime-local"
+          [(ngModel)]="marketForm.endDate"
+          [attr.min]="getCreateMarketMinDateTime()"
+          [attr.max]="getCreateMarketMaxDateTime()"
+          class="form-control"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>{{ 'ADMIN.MARKET_FIELD_SUBJECT' | translate }}</label>
+        <select [(ngModel)]="marketForm.subjectProviderId" (ngModelChange)="onSubjectChanged($event)" class="form-control">
+          <option value="">{{ 'ADMIN.MARKET_NO_SUBJECT' | translate }}</option>
+          <option *ngFor="let u of fortyTwoUsers" [value]="u.oauthProviderId">
+            {{ u.username }} (ID 42 : {{ u.oauthProviderId }})
+          </option>
+        </select>
+        <small class="form-hint" *ngIf="fortyTwoUsers.length === 0">
+          {{ 'ADMIN.MARKET_NO_42_USERS' | translate }}
+        </small>
+      </div>
+
+      <div class="form-group" *ngIf="isProjectCategory()">
+        <label>{{ 'ADMIN.MARKET_FIELD_PROJECT' | translate }} <span class="required">{{ 'ADMIN.MARKET_FIELD_REQUIRED' | translate }}</span></label>
+        <select [(ngModel)]="marketForm.subjectContext" class="form-control">
+          <option value="">{{ 'ADMIN.MARKET_NO_PROJECTS' | translate }}</option>
+          <option *ngFor="let project of activeProjects" [value]="project">{{ project }}</option>
+        </select>
+        <small class="form-hint" *ngIf="projectOptionsLoading">{{ 'ADMIN.MARKET_LOADING_PROJECTS' | translate }}</small>
+        <small class="form-hint" *ngIf="!projectOptionsLoading && marketForm.subjectProviderId && activeProjects.length === 0">
+          {{ 'ADMIN.MARKET_NO_ACTIVE_PROJECTS' | translate }}
+        </small>
+      </div>
+
+      <div class="form-group" *ngIf="!isProjectCategory()">
+        <label>{{ 'ADMIN.MARKET_FIELD_METRIC' | translate }}</label>
+        <select [(ngModel)]="marketForm.metricType" class="form-control">
+          <option value="">{{ 'ADMIN.MARKET_METRIC_MANUAL' | translate }}</option>
+          <option value="LEVEL">{{ 'ADMIN.MARKET_METRIC_LEVEL' | translate }}</option>
+          <option value="CORRECTION_POINT">{{ 'ADMIN.MARKET_METRIC_CORRECTION' | translate }}</option>
+          <option value="WALLET">{{ 'ADMIN.MARKET_METRIC_WALLET' | translate }}</option>
+        </select>
+      </div>
+
+      <div class="form-group" *ngIf="!isProjectCategory() && marketForm.metricType">
+        <label>{{ 'ADMIN.MARKET_FIELD_TARGET' | translate }} <span class="required">{{ 'ADMIN.MARKET_FIELD_REQUIRED' | translate }}</span></label>
+        <input
+          type="number"
+          [(ngModel)]="marketForm.targetValue"
+          [placeholder]="'ADMIN.MARKET_PLACEHOLDER_TARGET' | translate"
+          class="form-control"
+          step="0.01"
+          min="0"
+        />
+        <small class="form-hint">{{ 'ADMIN.MARKET_TARGET_HINT' | translate }}</small>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="admin-btn admin-btn-ghost" (click)="closeCreateMarketModal()" [disabled]="createMarketSubmitting">
+        {{ 'ADMIN.BTN_CANCEL' | translate }}
+      </button>
+      <button class="btn-primary" (click)="submitCreateMarket()" [disabled]="createMarketSubmitting || !isCreateMarketFormValid()">
+        {{ createMarketSubmitting ? ('ADMIN.BTN_CREATING' | translate) : ('ADMIN.BTN_SUBMIT_MARKET' | translate) }}
+      </button>
+    </div>
+  </div>
+</div>

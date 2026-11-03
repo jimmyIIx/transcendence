@@ -1,0 +1,33 @@
+0000000000000000000000000000000000000000 1553051e2711f775491c026cad88c25e74be25a9 jimmy <jimmy@jimmy.(none)> 1782228074 +0200	clone: from https://github.com/Dmariano06/42bets.git
+1553051e2711f775491c026cad88c25e74be25a9 080f7bc016beb7187c3fdb82902054740f114128 jimmy <jimmy@jimmy.(none)> 1782837744 +0200	pull: Fast-forward
+080f7bc016beb7187c3fdb82902054740f114128 93d795b1d767c1d0d530c3d76ff08b60d05d02d5 jimmy <jimmy@jimmy.(none)> 1782922346 +0200	pull: Fast-forward
+93d795b1d767c1d0d530c3d76ff08b60d05d02d5 62cbce1a422b316af66f0ea666f24bf19d88876a Jimmy Dev <jimmy@42bets.dev> 1782926507 +0200	commit: feat: add ThemeService for light/dark mode toggle
+62cbce1a422b316af66f0ea666f24bf19d88876a de81a501a3c357a60c21236c8a7a763b96a3578a Jimmy Dev <jimmy@42bets.dev> 1782926573 +0200	commit: feat: add light mode toggle button and light mode styles
+de81a501a3c357a60c21236c8a7a763b96a3578a 881e0cb5db973cebac16114fc4bd6f5745ba0e83 Jimmy Dev <jimmy@42bets.dev> 1782926953 +0200	commit: fix: refactor ThemeService to apply theme immediately and on changes
+881e0cb5db973cebac16114fc4bd6f5745ba0e83 0b5e8b484474bdaa2fb09dcc121bccb5d98e3df7 Jimmy Dev <jimmy@42bets.dev> 1782927127 +0200	commit: fix: remove extra closing brace in ThemeService
+0b5e8b484474bdaa2fb09dcc121bccb5d98e3df7 5384ea54d3f73bc6af3a6cb719575eeb4d99772b Jimmy Dev <jimmy@42bets.dev> 1782927323 +0200	commit: fix: apply theme to body element and add .dark-mode class
+5384ea54d3f73bc6af3a6cb719575eeb4d99772b 1deee8dfd9438fcd9ba8841e98dc5ab3faa22a8e Jimmy Dev <jimmy@42bets.dev> 1782927550 +0200	commit: fix: use afterNextRender for theme initialization in SSR context
+1deee8dfd9438fcd9ba8841e98dc5ab3faa22a8e 0ebd691f416e16ca94c810881c53360bf8152ccc Jimmy Dev <jimmy@42bets.dev> 1782928743 +0200	commit: debug: add console logs to theme toggle
+0ebd691f416e16ca94c810881c53360bf8152ccc 93d795b1d767c1d0d530c3d76ff08b60d05d02d5 Jimmy Dev <jimmy@42bets.dev> 1782928870 +0200	reset: moving to 93d795b
+93d795b1d767c1d0d530c3d76ff08b60d05d02d5 2d5d6ba4252c4117b3ad0f6b7229538e98393289 Jimmy Dev <jimmy@42bets.dev> 1782932988 +0200	commit: feat: add ThemeService for theme management with SSR compatibility and persistence
+2d5d6ba4252c4117b3ad0f6b7229538e98393289 3030dcd61b6770c91aee8721efeae84e7f667580 Jimmy Dev <jimmy@42bets.dev> 1782933018 +0200	commit: style: define variables for light and dark themes with smooth system transitions
+3030dcd61b6770c91aee8721efeae84e7f667580 4bab5d57978ec476b8a83f089ebbe5f709285b9a Jimmy Dev <jimmy@42bets.dev> 1782933075 +0200	commit: feat: connect app.ts theme toggle button to ThemeService reactively
+4bab5d57978ec476b8a83f089ebbe5f709285b9a 83fbd9da895499a46c42c6c8ac5f790df598d027 Jimmy Dev <jimmy@42bets.dev> 1782933816 +0200	commit: fix: make theme application deterministic and add detailed logging for SSR context
+83fbd9da895499a46c42c6c8ac5f790df598d027 ffd08bc057744da102b074410742f69e1a04e38d Jimmy Dev <jimmy@42bets.dev> 1782935501 +0200	pull: Merge made by the 'ort' strategy.
+ffd08bc057744da102b074410742f69e1a04e38d 4cf61886a6998f9c0952cb6e97b26a59d73d1e53 Jimmy Dev <jimmy@42bets.dev> 1782935745 +0200	commit: fix probleme cache et base du mode dark/light
+4cf61886a6998f9c0952cb6e97b26a59d73d1e53 96d9f6840c0fb14381f0c6c9e3eb22121b56cc41 Jimmy Dev <jimmy@42bets.dev> 1782940207 +0200	commit: Implement dark/light mode support across different parts of the site
+96d9f6840c0fb14381f0c6c9e3eb22121b56cc41 0af71d50fe4d908514709064af6e17020a3c7209 Jimmy Dev <jimmy@42bets.dev> 1783024141 +0200	pull: Fast-forward
+0af71d50fe4d908514709064af6e17020a3c7209 0af71d50fe4d908514709064af6e17020a3c7209 Jimmy Dev <jimmy@42bets.dev> 1783082712 +0200	reset: moving to HEAD
+0af71d50fe4d908514709064af6e17020a3c7209 0c38a6844fc2a6e46f62882aeafd02ca43eb0ba3 Jimmy Dev <jimmy@42bets.dev> 1783082713 +0200	pull: Fast-forward
+0c38a6844fc2a6e46f62882aeafd02ca43eb0ba3 fa3edcc0c57f92ec32a711f484c44a4949bf963c Jimmy Dev <jimmy@42bets.dev> 1783082778 +0200	commit: mode avance
+fa3edcc0c57f92ec32a711f484c44a4949bf963c 69f70f2a731ec6ed545753313bf00d8996518dea Jimmy Dev <jimmy@42bets.dev> 1783084344 +0200	pull: Fast-forward
+69f70f2a731ec6ed545753313bf00d8996518dea e75699616ee6263974cd80963ad2e4947ef4d940 Jimmy Dev <jimmy@42bets.dev> 1783089276 +0200	pull: Fast-forward
+e75699616ee6263974cd80963ad2e4947ef4d940 19a9cf8c132b8830b92d80d0df0e75f694dff94e Jimmy Dev <jimmy@42bets.dev> 1783089325 +0200	commit: avancement mode dark/light
+19a9cf8c132b8830b92d80d0df0e75f694dff94e 7425f1eb6cddb7c9f6dbeaea3e835131e5c1298f Jimmy Dev <jimmy@42bets.dev> 1783093783 +0200	pull: Fast-forward
+7425f1eb6cddb7c9f6dbeaea3e835131e5c1298f 3772da4333115fc8a8839d4897c7119cd84eebb9 Jimmy Dev <jimmy@42bets.dev> 1783094764 +0200	commit: mode dark/light nav-chip
+3772da4333115fc8a8839d4897c7119cd84eebb9 3772da4333115fc8a8839d4897c7119cd84eebb9 Jimmy Dev <jimmy@42bets.dev> 1783182684 +0200	reset: moving to HEAD
+3772da4333115fc8a8839d4897c7119cd84eebb9 3772da4333115fc8a8839d4897c7119cd84eebb9 Jimmy Dev <jimmy@42bets.dev> 1783183449 +0200	reset: moving to HEAD
+3772da4333115fc8a8839d4897c7119cd84eebb9 fe87d4207efb1b6bc5921b315a523a33067e8db6 Jimmy Dev <jimmy@42bets.dev> 1783183451 +0200	reset: moving to origin/main
+fe87d4207efb1b6bc5921b315a523a33067e8db6 6dab765f1396ec6f47a2e8a1e7055e99a8461fed Jimmy Dev <jimmy@42bets.dev> 1783207779 +0200	pull: Fast-forward
+6dab765f1396ec6f47a2e8a1e7055e99a8461fed 0000000000000000000000000000000000000000 Jimmy Dev <jimmy@42bets.dev> 1793731623 +0100	Branch: renamed refs/heads/main to refs/heads/main
+6dab765f1396ec6f47a2e8a1e7055e99a8461fed 6dab765f1396ec6f47a2e8a1e7055e99a8461fed Jimmy Dev <jimmy@42bets.dev> 1793731623 +0100	Branch: renamed refs/heads/main to refs/heads/main

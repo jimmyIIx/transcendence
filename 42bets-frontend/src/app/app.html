@@ -1,0 +1,796 @@
+<header
+  class="web-shell-navbar box-border inset-x-0 sticky top-0 z-30 flex w-full flex-col overflow-visible border-b border-[var(--box-border)] bg-[var(--bg-primary)] backdrop-blur"
+>
+  <div class="mx-auto flex min-h-[68px] w-full max-w-[1350px] items-center gap-3 px-4 py-2 lg:px-6">
+    <a [routerLink]="getBrandLink()" [attr.aria-label]="'APP.NAV_HOME_ARIA' | translate" class="shrink-0">
+      <img src="/42bet-cropped.png" alt="42Bets" class="nav-brand-logo w-auto object-contain" />
+    </a>
+
+    <div class="nav-desktop-center flex items-center gap-2 w-full min-w-0">
+      <div class="nav-search-help-group">
+        <form
+          role="search"
+          [attr.aria-label]="'APP.NAV_SEARCH_ARIA' | translate"
+          class="nav-search-desktop relative"
+          (submit)="$event.preventDefault()"
+        >
+          <svg
+            viewBox="0 0 18 18"
+            class="nav-search-icon pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+            aria-hidden="true"
+          >
+            <path
+              d="M15.75 15.75L11.6386 11.6386M13.25 7.75A5.5 5.5 0 1 1 2.25 7.75A5.5 5.5 0 0 1 13.25 7.75Z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <input
+            type="text"
+            [placeholder]="'APP.NAV_SEARCH_PLACEHOLDER' | translate"
+            class="nav-search-input w-full"
+            [value]="searchQuery()"
+            (input)="onSearchInput($event)"
+            (focus)="onSearchFocus()"
+            (blur)="onSearchBlur()"
+            autocomplete="off"
+          />
+
+          <!-- Search dropdown -->
+          <div
+            class="nav-search-dropdown"
+            *ngIf="searchOpen()"
+            (mousedown)="$event.preventDefault()"
+          >
+            <!-- Loading -->
+            <div *ngIf="searchLoading()" class="search-loading">
+              <span class="search-spinner"></span>
+              <span>{{ 'APP.NAV_SEARCH_LOADING' | translate }}</span>
+            </div>
+
+            <ng-container *ngIf="!searchLoading() && searchResults() as results">
+
+              <!-- Markets section -->
+              <div *ngIf="results.markets.length > 0" class="search-section">
+                <div class="search-section-header">
+                  <svg viewBox="0 0 18 18" width="12" height="12" aria-hidden="true"><path d="M2.25 12.75V6.75L9 2.25L15.75 6.75V12.75C15.75 13.5784 15.0784 14.25 14.25 14.25H3.75C2.9216 14.25 2.25 13.5784 2.25 12.75Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  {{ 'APP.NAV_SEARCH_MARKETS' | translate }}
+                </div>
+                <button
+                  *ngFor="let market of results.markets"
+                  type="button"
+                  class="search-result-item"
+                  (click)="navigateToMarket(market.id)"
+                >
+                  <div class="search-result-market">
+                    <span class="search-result-question">{{ market | marketQuestion }}</span>
+                    <div class="search-result-meta">
+                      <span class="search-result-category">{{ market.category }}</span>
+                      <span class="search-result-prob" [class.search-prob-resolved]="market.resolved">
+                        {{ market.resolved ? market.resolvedOutcome : (market.yesProbability | number:'1.0-0') + '%' }}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Divider -->
+              <div *ngIf="results.markets.length > 0 && results.users.length > 0" class="search-divider"></div>
+
+              <!-- Users section -->
+              <div *ngIf="results.users.length > 0" class="search-section">
+                <div class="search-section-header">
+                  <svg viewBox="0 0 18 18" width="12" height="12" aria-hidden="true"><circle cx="9" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 15.5C2.5 12.7386 5.46243 10.5 9 10.5C12.5376 10.5 15.5 12.7386 15.5 15.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  {{ 'APP.NAV_SEARCH_USERS' | translate }}
+                </div>
+                <div *ngFor="let user of results.users" class="search-result-item search-result-user">
+                  <img
+                    *ngIf="user.avatarUrl"
+                    [src]="user.avatarUrl"
+                    alt=""
+                    class="search-user-avatar"
+                    (error)="$any($event.target).style.display='none'"
+                  />
+                  <span
+                    *ngIf="!user.avatarUrl"
+                    class="search-user-avatar search-user-avatar-initials"
+                  >{{ user.username.slice(0, 2).toUpperCase() }}</span>
+                  <span class="search-user-name">{{ user.username }}</span>
+                  <span class="search-user-role" [class.search-role-admin]="user.role === 'ADMIN'">{{ user.role }}</span>
+                </div>
+              </div>
+
+              <!-- Empty -->
+              <div
+                *ngIf="results.markets.length === 0 && results.users.length === 0"
+                class="search-empty"
+              >
+                {{ 'APP.NAV_SEARCH_EMPTY' | translate: {query: searchQuery()} }}
+              </div>
+
+            </ng-container>
+          </div>
+        </form>
+
+        <button
+          type="button"
+          class="btn-link"
+          (click)="openHowItWorksModal()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 18 18" aria-hidden="true">
+            <path
+              d="M9 1C4.5889 1 1 4.5889 1 9C1 13.4111 4.5889 17 9 17C13.4111 17 17 13.4111 17 9C17 4.5889 13.4111 1 9 1ZM9.75 12.75C9.75 13.1641 9.4141 13.5 9 13.5C8.5859 13.5 8.25 13.1641 8.25 12.75V9.5H7.75C7.3359 9.5 7 9.1641 7 8.75C7 8.3359 7.3359 8 7.75 8H8.5C9.1895 8 9.75 8.5605 9.75 9.25V12.75ZM9 6.75C8.448 6.75 8 6.301 8 5.75C8 5.199 8.448 4.75 9 4.75C9.552 4.75 10 5.199 10 5.75C10 6.301 9.552 6.75 9 6.75Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>{{ 'APP.NAV_HOW_IT_WORKS' | translate }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="ml-auto flex items-center gap-2">
+      <div class="nav-auth-group">
+        <a
+          *ngIf="!isAuthenticated()"
+          href="#"
+          class="btn-ghost-hover"
+          (click)="$event.preventDefault(); openLoginModal()"
+          >{{ 'APP.NAV_LOGIN' | translate }}</a
+        >
+        <a
+          *ngIf="!isAuthenticated()"
+          href="#"
+          class="btn-primary"
+          (click)="$event.preventDefault(); openRegisterModal()"
+          >{{ 'APP.NAV_REGISTER' | translate }}</a
+        >
+      </div>
+
+      <a
+        *ngIf="!isAuthenticated()"
+        href="#"
+        class="btn-ghost-hover nav-login-mobile"
+        (click)="$event.preventDefault(); openLoginModal()"
+        >{{ 'APP.NAV_LOGIN' | translate }}</a
+      >
+
+      <a
+        *ngIf="!isAuthenticated()"
+        href="#"
+        class="btn-primary nav-signup-mobile"
+        (click)="$event.preventDefault(); openRegisterModal()"
+        >{{ 'APP.NAV_REGISTER' | translate }}</a
+      >
+
+      <a
+        *ngIf="isAuthenticated()"
+        routerLink="/dashboard"
+        class="nav-wallet"
+        [attr.aria-label]="'APP.NAV_WALLET_ARIA' | translate"
+      >
+        <span class="nav-wallet-label">{{ 'APP.NAV_WALLET_LABEL' | translate }}</span>
+        <span class="nav-wallet-value">
+          <span>{{ (balance() ?? 0) | number: '1.2-2' }}</span>
+          <img src="/token42.png" alt="Token42" class="nav-wallet-token-icon" />
+        </span>
+      </a>
+
+      <a
+        *ngIf="isAuthenticated() && isAdmin()"
+        routerLink="/admin"
+        class="nav-pill nav-pill-admin"
+        >{{ 'APP.NAV_ADMIN' | translate }}</a
+      >
+
+      <button
+        *ngIf="isAuthenticated()"
+        type="button"
+        class="btn-primary nav-logout-desktop"
+        (click)="logout()"
+      >
+        {{ 'APP.NAV_LOGOUT' | translate }}
+      </button>
+
+      <!-- Notification bell (desktop) -->
+      <div *ngIf="isAuthenticated()" class="nav-notif-wrap nav-logout-desktop">
+        <button
+          type="button"
+          class="nav-notif-btn"
+          (click)="toggleNotifDropdown()"
+          [attr.aria-label]="unreadCount() > 0 ? ('APP.NAV_NOTIF_ARIA_UNREAD' | translate: {count: unreadCount()}) : ('APP.NAV_NOTIF_ARIA' | translate)"
+        >
+          <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 1.5A5.25 5.25 0 0 0 3.75 6.75C3.75 10.5 2.25 11.25 2.25 11.25h13.5S14.25 10.5 14.25 6.75A5.25 5.25 0 0 0 9 1.5Z"/>
+            <path d="M10.298 14.75a1.5 1.5 0 0 1-2.596 0"/>
+          </svg>
+          <span *ngIf="unreadCount() > 0" class="nav-notif-badge">
+            {{ unreadCount() > 9 ? '9+' : unreadCount() }}
+          </span>
+        </button>
+
+        <!-- Dropdown panel -->
+        <div
+          *ngIf="notifOpen()"
+          class="nav-notif-dropdown"
+          (mousedown)="$event.stopPropagation()"
+        >
+          <div class="notif-header">
+            <span class="notif-title">{{ 'APP.NAV_NOTIF_TITLE' | translate }}</span>
+            <button *ngIf="notifications().length > 0" type="button" class="notif-clear" (click)="closeNotifDropdown()">&#x2715;</button>
+          </div>
+
+          <div *ngIf="notifications().length === 0" class="notif-empty">
+            <svg viewBox="0 0 18 18" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+              <path d="M9 1.5A5.25 5.25 0 0 0 3.75 6.75C3.75 10.5 2.25 11.25 2.25 11.25h13.5S14.25 10.5 14.25 6.75A5.25 5.25 0 0 0 9 1.5Z" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>{{ 'APP.NAV_NOTIF_EMPTY' | translate }}</span>
+          </div>
+
+          <div
+            *ngFor="let n of notifications()"
+            class="notif-item"
+            [class.notif-unread]="!n.read"
+          >
+            <span class="notif-icon" [class.notif-icon-resolved]="n.type === 'MARKET_RESOLVED'" [class.notif-icon-filled]="n.type === 'ORDER_FILLED'">
+              <svg *ngIf="n.type === 'MARKET_RESOLVED'" viewBox="0 0 18 18" width="14" height="14" fill="currentColor" aria-hidden="true">
+                <path d="M9 1L11.09 6.26L17 7.27L13 11.14L14.18 17L9 14.27L3.82 17L5 11.14L1 7.27L6.91 6.26L9 1Z"/>
+              </svg>
+              <svg *ngIf="n.type === 'ORDER_FILLED'" viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="2,9 7,14 16,4"/>
+              </svg>
+            </span>
+            <div class="notif-body">
+              <span class="notif-msg">{{ n.message }}</span>
+              <span class="notif-time">{{ timeAgo(n.timestamp) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        *ngIf="mobileMenuOpen()"
+        class="nav-mobile-backdrop"
+        (click)="closeMobileMenu()"
+        aria-hidden="true"
+      ></div>
+
+      <div
+        class="nav-burger-wrap"
+        (mouseenter)="onMobileMenuHoverEnter()"
+        (mouseleave)="onMobileMenuHoverLeave()"
+      >
+        <button
+          type="button"
+          [attr.aria-label]="'APP.NAV_MENU_ARIA' | translate"
+          [attr.aria-expanded]="mobileMenuOpen()"
+          (click)="toggleMobileMenu()"
+          class="btn-icon-ghost-hover nav-burger"
+        >
+          <img
+            *ngIf="isAuthenticated() && avatarUrl() && !avatarError()"
+            [src]="avatarUrl()!"
+              [attr.alt]="'PROFILE.AVATAR_ALT' | translate"
+            class="nav-burger-avatar"
+            style="object-fit:cover;background:none"
+            (error)="onAvatarError()"
+          />
+          <span
+            *ngIf="isAuthenticated() && (!avatarUrl() || avatarError())"
+            class="nav-burger-avatar"
+            [style.background]="avatarBackground()"
+          >{{ userInitials() }}</span>
+          <svg
+            *ngIf="isAuthenticated()"
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            class="nav-burger-caret"
+            [class.nav-burger-caret-open]="mobileMenuOpen()"
+            aria-hidden="true"
+          >
+            <polyline
+              points="1.75 4.25 6 8.5 10.25 4.25"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+            />
+          </svg>
+          <svg *ngIf="!isAuthenticated()" viewBox="0 0 18 18" class="h-5 w-5" aria-hidden="true">
+            <path
+              d="M2 4.5H16M2 9H16M2 13.5H16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+
+        <div
+          class="nav-mobile-panel"
+          [class.block]="mobileMenuOpen()"
+          [class.nav-mobile-panel-expanded]="languageMenuOpen()"
+          (mouseenter)="onMobileMenuHoverEnter()"
+          (mouseleave)="onMobileMenuHoverLeave()"
+        >
+          <nav class="nav-menu-list" [attr.aria-label]="'APP.NAV_MENU_ARIA' | translate">
+            <div
+              *ngIf="isAuthenticated()"
+              class="nav-menu-row nav-menu-row-profile"
+            >
+              <button type="button" class="nav-menu-profile-main" (click)="goToProfile()">
+                <img
+                  *ngIf="avatarUrl() && !avatarError()"
+                  [src]="avatarUrl()!"
+                  [attr.alt]="'PROFILE.AVATAR_ALT' | translate"
+                  class="nav-menu-avatar"
+                  style="object-fit:cover;background:none"
+                  (error)="onAvatarError()"
+                />
+                <span
+                  *ngIf="!avatarUrl() || avatarError()"
+                  class="nav-menu-avatar"
+                  [style.background]="avatarBackground()"
+                >{{ userInitials() }}</span>
+                <span class="nav-menu-profile-text">
+                  <span class="nav-menu-profile-name">{{ username() || ('APP.NAV_MENU_PROFILE_FALLBACK' | translate) }}</span>
+                </span>
+              </button>
+              <button
+                type="button"
+                class="nav-menu-gear"
+                (click)="goToProfile()"
+                [attr.aria-label]="'APP.NAV_MENU_PROFILE_SETTINGS_ARIA' | translate"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M19.14 12.94c.04-.31.06-.62.06-.94 0-.32-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.5.5 0 0 0-.61.22L2.74 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.62-.06.94 0 .32.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.42.34.68.22l2.39-.96c.49.37 1.03.7 1.62.94l.36 2.54c.05.24.26.42.5.42h3.84c.24 0 .45-.18.5-.42l.36-2.54c.59-.24 1.12-.57 1.62-.94l2.39.96c.26.12.54.02.68-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div *ngIf="isAuthenticated()" class="nav-menu-separator" role="presentation"></div>
+
+            <button type="button" class="nav-menu-row" (click)="goToRanking()">
+              <span class="nav-menu-row-left">
+                <svg class="nav-menu-icon-trophy" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <path
+                    d="M6 4h12v2h2.5a1.5 1.5 0 0 1 1.5 1.5C22 10.5 20 13 17 13.4 16.2 15 14.7 16.2 13 16.7V19h3v2H8v-2h3v-2.3C9.3 16.2 7.8 15 7 13.4 4 13 2 10.5 2 7.5A1.5 1.5 0 0 1 3.5 6H6V4Zm0 4H4c0 1.9 1.2 3.4 3 3.8V8Zm12 0v3.8c1.8-.4 3-1.9 3-3.8h-3Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <span>{{ 'APP.NAV_MENU_RANKING' | translate }}</span>
+              </span>
+            </button>
+
+            <button type="button" class="nav-menu-row" (click)="toggleDarkMode()">
+              <span class="nav-menu-row-left">
+                <svg class="nav-menu-icon-moon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <path
+                    d="M21 12.8A8.5 8.5 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <span>{{ 'APP.NAV_MENU_DARK_MODE' | translate }}</span>
+              </span>
+              <span
+                class="nav-switch"
+                [class.nav-switch-on]="darkMode()"
+                role="switch"
+                [attr.aria-checked]="darkMode()"
+              >
+                <span class="nav-switch-thumb"></span>
+              </span>
+            </button>
+
+            <div class="nav-menu-separator" role="presentation"></div>
+
+            <a href="/faq" class="nav-menu-row nav-menu-row-faq" (click)="navigateToPage('/faq', $event)">
+              <span class="nav-menu-row-left">
+                <span>{{ 'APP.NAV_MENU_FAQ' | translate }}</span>
+              </span>
+            </a>
+
+            <a href="/privacy" class="nav-menu-row nav-menu-row-faq" (click)="navigateToLegalPage('/privacy', $event)">
+              <span class="nav-menu-row-left">
+                <span>{{ 'APP.NAV_MENU_PRIVACY' | translate }}</span>
+              </span>
+            </a>
+
+            <a href="/terms" class="nav-menu-row nav-menu-row-faq" (click)="navigateToLegalPage('/terms', $event)">
+              <span class="nav-menu-row-left">
+                <span>{{ 'APP.NAV_MENU_TERMS' | translate }}</span>
+              </span>
+            </a>
+
+            <button
+              type="button"
+              class="nav-menu-row nav-menu-row-language"
+              [attr.aria-expanded]="languageMenuOpen()"
+              (click)="toggleLanguageMenu()"
+            >
+              <span class="nav-menu-row-left">
+                <img
+                  class="nav-menu-flag-image"
+                  [src]="language() === 'FR' ? '/flags/fr.svg' : (language() === 'EN' ? '/flags/gb.svg' : '/flags/ru.svg')"
+                  alt=""
+                  aria-hidden="true"
+                />
+                <span>{{ 'APP.NAV_MENU_LANG' | translate }}</span>
+              </span>
+              <span class="nav-menu-row-value">
+                <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                  <path d="M2 4.5 6 8l4-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </button>
+
+            <div *ngIf="languageMenuOpen()" class="nav-language-dropdown">
+              <button
+                type="button"
+                class="nav-language-option"
+                [class.nav-language-option-active]="language() === 'FR'"
+                (click)="setLanguage('FR')"
+              >
+                <img class="nav-menu-flag-image" src="/flags/fr.svg" alt="" aria-hidden="true" />
+                <span>Fran&#xe7;ais</span>
+              </button>
+              <button
+                type="button"
+                class="nav-language-option"
+                [class.nav-language-option-active]="language() === 'EN'"
+                (click)="setLanguage('EN')"
+              >
+                <img class="nav-menu-flag-image" src="/flags/gb.svg" alt="" aria-hidden="true" />
+                <span>English</span>
+              </button>
+              <button
+                type="button"
+                class="nav-language-option"
+                [class.nav-language-option-active]="language() === 'RU'"
+                (click)="setLanguage('RU')"
+              >
+                <img class="nav-menu-flag-image" src="/flags/ru.svg" alt="" aria-hidden="true" />
+                <span>&#x420;&#x443;&#x441;&#x441;&#x43a;&#x438;&#x439;</span>
+              </button>
+            </div>
+
+            <div *ngIf="isAuthenticated()" class="nav-menu-separator nav-menu-logout-separator"></div>
+
+            <button
+              *ngIf="isAuthenticated()"
+              type="button"
+              class="nav-menu-row nav-menu-logout"
+              (click)="logout()"
+            >
+              <span class="nav-menu-row-left">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                  <path d="M15 12H4m0 0 3.5-3.5M4 12l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M11 4h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span>{{ 'APP.NAV_MENU_LOGOUT' | translate }}</span>
+              </span>
+            </button>
+
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-chips-bar">
+    <div class="mx-auto w-full max-w-[1350px] px-4 pb-2 pt-2 lg:px-6">
+      <div class="no-scrollbar flex items-center gap-0 overflow-x-auto">
+        <a
+          routerLink="/markets"
+          [queryParams]="{ sort: 'trending' }"
+          routerLinkActive="nav-chip-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="nav-chip shrink-0"
+        >
+          <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
+            <path
+              d="M1.75 12.25L5.396 8.604a.5.5 0 0 1 .707 0l3.293 3.293a.5.5 0 0 0 .707 0l6.146-6.146M11.25 5.75h5v5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span>{{ 'APP.NAV_CHIP_TRENDING' | translate }}</span></a
+        >
+        <a
+          routerLink="/markets"
+          [queryParams]="{ sort: 'piscine' }"
+          routerLinkActive="nav-chip-active"
+          [routerLinkActiveOptions]="{ exact: true, queryParams: 'exact' }"
+          class="nav-chip nav-chip-piscine shrink-0"
+        >
+          <span class="nav-chip-42-logo" aria-hidden="true"></span>
+          <span class="nav-chip-piscine-text">{{ 'APP.NAV_CHIP_PISCINE' | translate }}</span></a
+        >
+        <a
+          routerLink="/classement"
+          routerLinkActive="nav-chip-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="nav-chip shrink-0"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path
+              d="M6 4h12v2h2.5a1.5 1.5 0 0 1 1.5 1.5C22 10.5 20 13 17 13.4 16.2 15 14.7 16.2 13 16.7V19h3v2H8v-2h3v-2.3C9.3 16.2 7.8 15 7 13.4 4 13 2 10.5 2 7.5A1.5 1.5 0 0 1 3.5 6H6V4Zm0 4H4c0 1.9 1.2 3.4 3 3.8V8Zm12 0v3.8c1.8-.4 3-1.9 3-3.8h-3Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>{{ 'APP.NAV_MENU_RANKING' | translate }}</span>
+        </a>
+        <a
+          *ngFor="let cat of navCategories()"
+          routerLink="/markets"
+          [queryParams]="{ category: cat }"
+          routerLinkActive="nav-chip-active"
+          [routerLinkActiveOptions]="{ exact: true, queryParams: 'exact' }"
+          class="nav-chip shrink-0"
+        >{{ categoryLabel(cat) }}</a>
+      </div>
+
+      <div class="nav-mobile-search-divider" role="presentation"></div>
+
+      <form [attr.aria-label]="'APP.NAV_SEARCH_ARIA' | translate" role="search" class="nav-mobile-search-wrap">
+        <svg
+          viewBox="0 0 18 18"
+          class="nav-search-icon pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+          aria-hidden="true"
+        >
+          <path
+            d="M15.75 15.75L11.6386 11.6386M13.25 7.75A5.5 5.5 0 1 1 2.25 7.75A5.5 5.5 0 0 1 13.25 7.75Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <input
+          type="text"
+          [placeholder]="'APP.NAV_MOBILE_SEARCH_PLACEHOLDER' | translate"
+          [attr.aria-label]="'APP.NAV_MOBILE_SEARCH_ARIA' | translate"
+          class="nav-search-input nav-mobile-search-input w-full"
+        />
+      </form>
+    </div>
+  </div>
+
+</header>
+
+<main class="px-4 py-4 sm:px-6 lg:px-8">
+  <router-outlet />
+</main>
+
+<footer class="site-footer" [attr.aria-label]="'APP.FOOTER_FOOTER_ARIA' | translate">
+  <div class="site-footer-inner">
+    <section class="site-footer-brand">
+      <a [routerLink]="getBrandLink()" [attr.aria-label]="'APP.FOOTER_HOME_ARIA' | translate" class="site-footer-logo-link">
+        <img src="/42bet-cropped.png" alt="42bet" class="site-footer-logo" />
+      </a>
+      <p class="site-footer-tagline">{{ 'APP.FOOTER_TAGLINE' | translate }}</p>
+    </section>
+
+    <section class="site-footer-grid" [attr.aria-label]="'APP.FOOTER_MARKETS_TITLE' | translate">
+      <div class="site-footer-block site-footer-markets">
+        <h3 class="site-footer-categories-title">{{ 'APP.FOOTER_MARKETS_TITLE' | translate }}</h3>
+        <div class="site-footer-market-list">
+          <a class="site-footer-market-link site-footer-market-link-trending" routerLink="/markets" [queryParams]="{ sort: 'trending' }">
+            {{ 'APP.FOOTER_TRENDING' | translate }}
+            <span>{{ 'APP.FOOTER_TRENDING_DESC' | translate }}</span>
+          </a>
+          <a class="site-footer-market-link site-footer-market-link-piscine" routerLink="/markets" [queryParams]="{ sort: 'piscine' }">
+            {{ 'APP.FOOTER_PISCINE' | translate }}
+            <span>{{ 'APP.FOOTER_PISCINE_DESC' | translate }}</span>
+          </a>
+          <a
+            *ngFor="let cat of navCategories()"
+            class="site-footer-market-link"
+            routerLink="/markets"
+            [queryParams]="{ category: cat }"
+          >{{ categoryLabel(cat) }}</a>
+        </div>
+      </div>
+
+      <div class="site-footer-block">
+        <h3 class="site-footer-categories-title">{{ 'APP.FOOTER_SUPPORT' | translate }}</h3>
+        <div class="site-footer-link-list">
+          <a class="site-footer-footer-nav-link" href="/contact" rel="noopener">{{ 'APP.FOOTER_CONTACT' | translate }}</a>
+        </div>
+      </div>
+
+      <div class="site-footer-block">
+        <h3 class="site-footer-categories-title">{{ 'APP.FOOTER_42BET' | translate }}</h3>
+        <div class="site-footer-link-list">
+          <a class="site-footer-footer-nav-link" href="/classement" (click)="navigateToPage('/classement', $event)" rel="noopener">{{ 'APP.FOOTER_RANKING' | translate }}</a>
+          <a class="site-footer-footer-nav-link" href="/faq" (click)="navigateToPage('/faq', $event)" rel="noopener">{{ 'APP.FOOTER_FAQ' | translate }}</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="site-footer-bottom">
+      <div class="site-footer-legal" [attr.aria-label]="'APP.FOOTER_LEGAL_ARIA' | translate">
+        <span class="site-footer-legal-item">{{ 'APP.FOOTER_COPYRIGHT' | translate }}</span>
+        <span class="site-footer-legal-dot" aria-hidden="true">&#xB7;</span>
+        <a href="/privacy" class="site-footer-legal-link" (click)="navigateToLegalPage('/privacy', $event)">
+          {{ 'APP.FOOTER_PRIVACY' | translate }}
+        </a>
+        <span class="site-footer-legal-dot" aria-hidden="true">&#xB7;</span>
+        <a href="/terms" class="site-footer-legal-link" (click)="navigateToLegalPage('/terms', $event)">
+          {{ 'APP.FOOTER_TERMS' | translate }}
+        </a>
+        <span class="site-footer-legal-dot" aria-hidden="true">&#xB7;</span>
+
+        <div class="site-footer-language" [class.site-footer-language-open]="footerLanguageMenuOpen()">
+          <button
+            type="button"
+            class="site-footer-language-toggle"
+            (click)="toggleFooterLanguageMenu()"
+            [attr.aria-expanded]="footerLanguageMenuOpen()"
+            aria-haspopup="listbox"
+            [attr.aria-label]="'APP.FOOTER_LANG_ARIA' | translate"
+          >
+            <img [src]="currentLanguageFlag()" [alt]="currentLanguageLabel()" class="site-footer-language-flag" />
+            <span>{{ currentLanguageLabel() }}</span>
+            <span class="site-footer-language-caret" aria-hidden="true">
+              <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                <path
+                  d="M2 4.5 6 8l4-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+          </button>
+
+          <div class="site-footer-language-menu" *ngIf="footerLanguageMenuOpen()" role="listbox" [attr.aria-label]="'APP.FOOTER_LANG_LIST_ARIA' | translate">
+            <button type="button" class="site-footer-language-option" role="option" (click)="setLanguage('FR')">
+              <img src="/flags/fr.svg" alt="Fran&#xe7;ais" class="site-footer-language-flag" />
+              <span>Fran&#xe7;ais</span>
+            </button>
+            <button type="button" class="site-footer-language-option" role="option" (click)="setLanguage('EN')">
+              <img src="/flags/gb.svg" alt="English" class="site-footer-language-flag" />
+              <span>English</span>
+            </button>
+            <button type="button" class="site-footer-language-option" role="option" (click)="setLanguage('RU')">
+              <img src="/flags/ru.svg" alt="&#x420;&#x443;&#x441;&#x441;&#x43a;&#x438;&#x439;" class="site-footer-language-flag" />
+              <span>&#x420;&#x443;&#x441;&#x441;&#x43a;&#x438;&#x439;</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="site-footer-compliance-text">
+        {{ 'APP.FOOTER_COMPLIANCE_PART1' | translate }}
+        <a href="/terms" class="site-footer-compliance-link" (click)="navigateToLegalPage('/terms', $event)">{{ 'APP.FOOTER_COMPLIANCE_TERMS' | translate }}</a>
+        {{ 'APP.FOOTER_COMPLIANCE_AND' | translate }}
+        <a href="/privacy" class="site-footer-compliance-link" (click)="navigateToLegalPage('/privacy', $event)">{{ 'APP.FOOTER_COMPLIANCE_PRIVACY' | translate }}</a>
+        {{ 'APP.FOOTER_COMPLIANCE_PART2' | translate }}
+      </p>
+    </section>
+  </div>
+</footer>
+
+<div class="app-login-modal-overlay" *ngIf="howItWorksModalOpen()" (click)="onModalOverlayClick($event)">
+  <div
+    class="app-how-modal-shell card-surface"
+    [class.app-login-modal-shell-dragging]="modalSheetDragging()"
+    [style.transform]="getModalSheetTransform()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'APP.HOW_MODAL_ARIA' | translate"
+    tabindex="-1"
+    (pointerdown)="onModalContentPointerDown($event)"
+    (click)="$event.stopPropagation()"
+  >
+    <div
+      class="app-login-modal-grabber"
+      aria-hidden="true"
+      (touchstart)="onModalSheetTouchStart($event)"
+      (touchmove)="onModalSheetTouchMove($event)"
+      (touchend)="onModalSheetTouchEnd()"
+      (touchcancel)="onModalSheetTouchCancel()"
+      (pointerdown)="onModalSheetPointerDown($event)"
+      (pointermove)="onModalSheetPointerMove($event)"
+      (pointerup)="onModalSheetPointerUp($event)"
+      (pointercancel)="onModalSheetPointerCancel($event)"
+    ></div>
+    <div class="app-how-modal-hero">
+      <img
+        [src]="currentHowItWorksImage()"
+        [alt]="'APP.HOW_MODAL_IMAGE_ALT' | translate"
+        width="1290"
+        height="969"
+        decoding="async"
+        class="app-how-modal-image w-full h-auto"
+        style="color: transparent"
+      />
+    </div>
+    <div class="app-how-modal-body">
+      <h2 class="app-how-modal-title">{{ currentHowItWorksTitle() }}</h2>
+      <p class="app-how-modal-description">{{ currentHowItWorksDescription() }}</p>
+      <div class="app-how-modal-actions">
+        <button type="button" class="btn-primary app-how-modal-next" (click)="nextHowItWorksStep()">
+          {{ currentHowItWorksActionLabel() }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app-login-modal-overlay" *ngIf="loginModalOpen()" (click)="onModalOverlayClick($event)">
+  <div
+    class="app-login-modal-shell"
+    [class.app-login-modal-shell-dragging]="modalSheetDragging()"
+    [style.transform]="getModalSheetTransform()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'APP.LOGIN_MODAL_ARIA' | translate"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+  >
+    <div
+      class="app-login-modal-grabber"
+      aria-hidden="true"
+      (touchstart)="onModalSheetTouchStart($event)"
+      (touchmove)="onModalSheetTouchMove($event)"
+      (touchend)="onModalSheetTouchEnd()"
+      (touchcancel)="onModalSheetTouchCancel()"
+      (pointerdown)="onModalSheetPointerDown($event)"
+      (pointermove)="onModalSheetPointerMove($event)"
+      (pointerup)="onModalSheetPointerUp($event)"
+      (pointercancel)="onModalSheetPointerCancel($event)"
+    ></div>
+    <app-login
+      [modalMode]="true"
+      (requestClose)="closeAuthModal()"
+      (requestRegister)="switchToRegister()"
+    ></app-login>
+  </div>
+</div>
+
+<div class="app-login-modal-overlay" *ngIf="registerModalOpen()" (click)="onModalOverlayClick($event)">
+  <div
+    class="app-login-modal-shell"
+    [class.app-login-modal-shell-dragging]="modalSheetDragging()"
+    [style.transform]="getModalSheetTransform()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'APP.REGISTER_MODAL_ARIA' | translate"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+  >
+    <div
+      class="app-login-modal-grabber"
+      aria-hidden="true"
+      (touchstart)="onModalSheetTouchStart($event)"
+      (touchmove)="onModalSheetTouchMove($event)"
+      (touchend)="onModalSheetTouchEnd()"
+      (touchcancel)="onModalSheetTouchCancel()"
+      (pointerdown)="onModalSheetPointerDown($event)"
+      (pointermove)="onModalSheetPointerMove($event)"
+      (pointerup)="onModalSheetPointerUp($event)"
+      (pointercancel)="onModalSheetPointerCancel($event)"
+    ></div>
+    <app-register
+      [modalMode]="true"
+      (requestClose)="closeAuthModal()"
+      (requestLogin)="switchToLogin()"
+    ></app-register>
+  </div>
+</div>

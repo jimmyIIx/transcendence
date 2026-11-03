@@ -1,0 +1,498 @@
+================================================================================
+                  TRANSCENDENCE - DOCUMENTATION GÉNÉRALE
+                        Avril 2026
+================================================================================
+
+TABLE DES MATIÈRES
+==================
+1. Vue d'ensemble du projet
+2. Architecture générale
+3. Technologies utilisées
+4. Structure du projet
+5. Flux d'authentification
+6. Étapes d'installation et démarrage
+7. Prochaines étapes et améliorations
+
+
+1. VUE D'ENSEMBLE DU PROJET
+============================
+
+Transcendence est une application web de paris sportifs complète composée de:
+- Un BACKEND: API REST Spring Boot (Java) pour la gestion d'authentification et des données
+- Un FRONTEND: Application Angular 18+ avec SSR pour l'interface utilisateur
+- Une BASE DE DONNÉES: (à configurer - actuellement en dev)
+
+Le projet implémente un système d'authentification JWT sécurisé avec:
+✓ Inscription d'utilisateurs
+✓ Connexion avec JWT
+✓ Protection des routes
+✓ Gestion des tokens
+✓ Interface utilisateur responsive
+
+
+2. ARCHITECTURE GÉNÉRALE
+=========================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                        UTILISATEUR                              │
+│                     (Navigateur Web)                            │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+        ┌────────────────┼────────────────┐
+        │                                 │
+┌───────▼──────────┐          ┌──────────▼────────────┐
+│  FRONTEND        │          │      BACKEND         │
+│  Angular 18+     │◄────────►│   Spring Boot        │
+│  Port: 4200      │   HTTP   │   Port: 8080         │
+│  (SSR)           │  + JWT   │   (REST API)         │
+└───────┬──────────┘          └──────────┬────────────┘
+        │                                 │
+        │  ┌───────────────────────────────┤
+        │  │                               │
+        │  │                    ┌──────────▼────────────┐
+        │  │                    │   BASE DE DONNÉES    │
+        │  │                    │   (MySQL/PostgreSQL) │
+        │  │                    └──────────────────────┘
+        │  │
+        ▼  ▼
+    localStorage: JWT Token
+
+
+3. TECHNO UTILISÉES
+==========================
+
+FRONTEND:
+---------
+- Angular 18+ (framework web moderne)
+- TypeScript (langage de programmation)
+- SCSS/CSS (stylisation)
+- HTML5 (structure)
+- RxJS (programmation réactive)
+- FormsModule (gestion des formulaires)
+
+BACKEND:
+--------
+- Spring Boot 3.x (framework Java)
+- Spring Security (authentification/autorisation)
+- Spring Web (REST API)
+- JWT (JSON Web Tokens) - pour les tokens sécurisés
+- JPA/Hibernate (ORM - persistance base de données)
+- Maven (gestion de dépendances)
+
+INFRASTRUCTURE:
+---------------
+- Node.js v18+ (pour Angular CLI et dev server)
+- Java 17+ (pour Spring Boot)
+- Maven 3.8+ (build tool Java)
+- Git (contrôle de version)
+
+
+4. STRUCTURE DU PROJET
+=======================
+
+📁 transcendence/
+├── 📁 42bets-frontend/              [APPLICATION ANGULAR]
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── auth/                [MODULES AUTHENTIFICATION]
+│   │   │   │   ├── login/           [Composant Login]
+│   │   │   │   │   ├── login.ts
+│   │   │   │   │   ├── login.html
+│   │   │   │   │   └── login.scss
+│   │   │   │   └── register/        [Composant Register]
+│   │   │   │       ├── register.ts
+│   │   │   │       ├── register.html
+│   │   │   │       └── register.scss
+│   │   │   ├── guards/              [PROTECTION DES ROUTES]
+│   │   │   │   └── auth-guard.ts    [Guard CanActivate]
+│   │   │   ├── services/            [SERVICES]
+│   │   │   │   ├── auth.ts          [Service authentification]
+│   │   │   │   └── token.ts         [Service token/localStorage]
+│   │   │   ├── dashboard/           [Composant protégé]
+│   │   │   │   ├── dashboard.ts
+│   │   │   │   ├── dashboard.html
+│   │   │   │   └── dashboard.scss
+│   │   │   ├── app.ts               [Composant racine]
+│   │   │   ├── app.html
+│   │   │   ├── app.routes.ts        [Configuration routes]
+│   │   │   ├── app.config.ts        [Configuration app]
+│   │   │   └── app.scss
+│   │   ├── main.ts                  [Point d'entrée Angular]
+│   │   ├── index.html               [HTML principal]
+│   │   └── styles.scss              [Styles globaux]
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   └── background.jpg           [Image de fond auth pages]
+│   ├── package.json
+│   ├── angular.json
+│   └── tsconfig.json
+│
+└── 📁 transcendence/                [APPLICATION SPRING BOOT]
+    ├── src/main/java/com/ft/transcendence/
+    │   ├── TranscendenceApplication.java   [Point d'entrée]
+    │   ├── controller/
+    │   │   ├── AuthController.java         [Endpoints /auth]
+    │   │   └── TestController.java
+    │   ├── service/
+    │   │   ├── AuthService.java            [Logique auth]
+    │   │   └── UserService.java
+    │   ├── model/
+    │   │   ├── User.java                   [Entité User]
+    │   │   └── Role.java
+    │   ├── dto/
+    │   │   ├── LoginRequest.java
+    │   │   ├── RegisterRequest.java
+    │   │   └── [Autres DTOs]
+    │   ├── repository/
+    │   │   └── UserRepository.java         [Accès BD]
+    │   ├── security/
+    │   │   ├── SecurityConfig.java         [Config Security + CORS]
+    │   │   └── [Autres configs]
+    │   └── utils/
+    │       └── JwtUtils.java               [Génération JWT]
+    ├── src/main/resources/
+    │   └── application.properties          [Config Spring]
+    ├── pom.xml                             [Dépendances Maven]
+    └── mvnw                                [Maven Wrapper]
+
+
+5. FLUX D'AUTHENTIFICATION
+============================
+
+DIAGRAMME DU FLUX:
+
+┌──────────────────────────────────────────────────────────────────┐
+│ INSCRIPTION (Register)                                          │
+│ ─────────────────────────────────────────────────────────────── │
+│                                                                  │
+│ 1. Utilisateur remplit le formulaire                           │
+│    - Username (nom d'utilisateur)                             │
+│    - Email (adresse email)                                    │
+│    - Password (mot de passe, min 6 caractères)              │
+│    - Confirm Password (confirmation)                         │
+│                                                                │
+│ 2. Frontend valide (côté client):                            │
+│    ✓ Tous les champs sont remplis                           │
+│    ✓ Les mots de passe correspondent                        │
+│    ✓ Password >= 6 caractères                               │
+│                                                                │
+│ 3. POST /auth/register                                       │
+│    {                                                          │
+│      "username": "Djomino06",                               │
+│      "email": "user@example.com",                           │
+│      "password": "password123"                              │
+│    }                                                          │
+│                                                                │
+│ 4. Backend (AuthController):                                │
+│    ✓ Valide les données                                     │
+│    ✓ Crée l'utilisateur en BD                               │
+│    ✓ Hash le mot de passe (BCrypt)                          │
+│    ✓ Retourne l'objet User                                  │
+│                                                                │
+│ 5. Frontend auto-login (appelle login avec les même identifiants)
+│                                                                │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ CONNEXION (Login)                                               │
+│ ─────────────────────────────────────────────────────────────── │
+│                                                                  │
+│ 1. Utilisateur remplit le formulaire                           │
+│    - Username (nom d'utilisateur)                             │
+│    - Password (mot de passe)                                  │
+│                                                                │
+│ 2. Frontend valide (côté client):                            │
+│    ✓ Tous les champs sont remplis                           │
+│                                                                │
+│ 3. POST /auth/login                                         │
+│    {                                                          │
+│      "username": "Djomino06",                               │
+│      "password": "password123"                              │
+│    }                                                          │
+│                                                                │
+│ 4. Backend (AuthController):                                │
+│    ✓ Vérifie les identifiants                               │
+│    ✓ Génère JWT avec JwtUtils.generateToken(username)       │
+│    ✓ Retourne le JWT (plain text)                           │
+│      eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJEam9taW5vMDYi...       │
+│                                                                │
+│ 5. Frontend reçoit le JWT:                                  │
+│    ✓ Stocke dans localStorage (clé: "jwt_token")            │
+│    ✓ Navigue vers /dashboard                                │
+│                                                                │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ PROTECTION DES ROUTES                                           │
+│ ─────────────────────────────────────────────────────────────── │
+│                                                                  │
+│ Quand utilisateur accède à /dashboard:                        │
+│                                                                │
+│ 1. Angular authGuard vérifie:                               │
+│    ✓ TokenService.isTokenValid()                            │
+│      - Récupère token de localStorage                      │
+│      - Vérifie qu'il existe et n'est pas vide              │
+│                                                                │
+│ 2. Si token valide:                                         │
+│    ✓ Accès autorisé → affiche dashboard                     │
+│                                                                │
+│ 3. Si token invalide/absent:                               │
+│    ✓ Redirection automatique vers /login                    │
+│    ✓ Utilisateur doit se reconnecter                       │
+│                                                                │
+│ 4. Au logout:                                              │
+│    ✓ TokenService.removeToken() supprime du localStorage    │
+│    ✓ Navigue vers /login                                    │
+│                                                                │
+└──────────────────────────────────────────────────────────────────┘
+
+ENDPOINTS API BACKEND:
+======================
+
+POST /auth/login
+────────────────
+Request:
+{
+  "username": "Djomino06",
+  "password": "password123"
+}
+
+Response: 
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJEam9taW5vMDYiLCJpYXQiOjE2OTgyNDU...
+(Plain text JWT token)
+
+POST /auth/register
+───────────────────
+Request:
+{
+  "username": "Djomino06",
+  "email": "djomino@example.com",
+  "password": "password123"
+}
+
+Response:
+{
+  "id": 1,
+  "username": "Djomino06",
+  "email": "djomino@example.com",
+  "createdAt": "2026-04-19T19:00:00Z"
+}
+
+ROUTES FRONTEND:
+================
+
+http://localhost:4200/               → Redirection vers /login
+http://localhost:4200/login          → Page de connexion (publique)
+http://localhost:4200/register       → Page d'inscription (publique)
+http://localhost:4200/dashboard      → Page protégée (authentifiée)
+
+
+6. ÉTAPES D'INSTALLATION ET DÉMARRAGE
+======================================
+
+PRÉREQUIS:
+──────────
+- Git installé
+- Node.js v18+ installé
+- Java 17+ installé
+- Maven 3.8+ installé
+- MySQL ou PostgreSQL (configuration recommandée)
+
+INSTALLATION DU FRONTEND (Angular):
+────────────────────────────────────
+
+1. Naviguer dans le dossier frontend:
+   cd 42bets-frontend
+
+2. Installer les dépendances:
+   npm install
+
+3. Vérifier que le backend est déjà configuré
+
+4. Démarrer le serveur de développement:
+   ng serve
+   ou
+   npm start
+
+5. Accéder à http://localhost:4200
+
+INSTALLATION DU BACKEND (Spring Boot):
+───────────────────────────────────────
+
+1. Naviguer dans le dossier backend:
+   cd transcendence
+
+2. Configurer application.properties:
+   Éditer: src/main/resources/application.properties
+   - Port: server.port=8080
+   - Base de données: spring.datasource.url, username, password
+   - Autres configurations Spring
+
+3. Compiler et démarrer:
+   ./mvnw spring-boot:run
+   ou
+   mvn clean install
+   java -jar target/transcendence-0.0.1-SNAPSHOT.jar
+
+4. Backend accessible sur http://localhost:8080
+
+5. Vérifier la configuration CORS dans:
+   src/main/java/com/ft/transcendence/security/SecurityConfig.java
+   - Doit permettre http://localhost:4200
+
+
+DÉMARRAGE COMPLET:
+──────────────────
+
+Terminal 1 (Backend - Java):
+  cd transcendence
+  ./mvnw spring-boot:run
+
+Terminal 2 (Frontend - Angular):
+  cd 42bets-frontend
+  ng serve
+
+Terminal 3 (Navigation):
+  Ouvrir http://localhost:4200 dans le navigateur
+
+
+TESTER L'APPLICATION:
+─────────────────────
+
+1. Accéder à http://localhost:4200/register
+2. Créer un compte (username, email, password)
+3. Remplir le formulaire et cliquer "Register"
+4. Auto-login et redirection vers /dashboard
+5. Cliquer "Logout" pour se déconnecter
+6. Essayer d'accéder à /dashboard → redirection /login
+7. Cliquer sur "Login here" pour retourner à /login
+8. Se connecter avec les identifiants créés
+9. Accès au dashboard réussi!
+
+
+7. PROCHAINES ÉTAPES ET AMÉLIORATIONS
+======================================
+
+À FAIRE (URGENT):
+──────────────────
+
+1. Configuration Base de Données:
+   □ Créer schéma MySQL/PostgreSQL
+   □ Configurer datasource dans application.properties
+   □ Implémenter JPA entities complètes
+   □ Ajouter migrations (Flyway/Liquibase)
+
+2. Sécurité:
+   □ Implémenter password encoder BCrypt côté backend
+   □ Ajouter refresh tokens
+   □ Implémenter rate limiting pour éviter brute force
+   □ Valider et nettoyer les inputs
+   □ Ajouter HTTPS en production
+
+3. Validation:
+   □ Ajouter @Validated et @Valid dans les DTO
+   □ Messages d'erreur plus détaillés
+   □ Gérer les exceptions uniformément
+
+4. Tests:
+   □ Écrire tests unitaires (JUnit, Mockito)
+   □ Écrire tests d'intégration
+   □ Tests E2E du flux d'authentification
+
+5. Frontend améliorations:
+   □ Ajouter interceptor pour inclure JWT dans chaque requête
+   □ Meilleur gestion des erreurs
+   □ Animations de chargement
+   □ Responsive design mobile
+
+À FAIRE (MOYEN TERME):
+───────────────────────
+
+6. Authentification avancée:
+   □ Authentification OAuth2 (Google, Facebook, etc.)
+   □ Authentification 2FA
+   □ Recovery codes
+
+7. Gestion des utilisateurs:
+   □ Profil utilisateur
+   □ Édition profil
+   □ Avatar/Photo de profil
+   □ Historique d'activité
+
+8. Features métier:
+   □ Créer les paris
+   □ Gérer les mises
+   □ Afficher les résultats
+   □ Historique des paris
+
+9. Performance:
+   □ Caching (Redis)
+   □ Pagination
+   □ Lazy loading
+   □ Compression assets
+
+À FAIRE (LONG TERME):
+─────────────────────
+
+10. DevOps:
+   □ Dockeriser l'application
+   □ CI/CD pipeline (GitHub Actions, Jenkins)
+   □ Déploiement sur serveur production
+   □ Monitoring et logging
+
+
+FICHIERS DE CONFIGURATION CLÉS:
+================================
+
+Frontend:
+- angular.json: Configuration build Angular
+- tsconfig.json: Configuration TypeScript (module: ES2022, moduleResolution: bundler)
+- package.json: Dépendances npm
+
+Backend:
+- pom.xml: Dépendances Maven
+- application.properties: Configuration Spring Boot
+- SecurityConfig.java: Configuration CORS et sécurité
+
+
+NOTES IMPORTANTES:
+===================
+
+1. LE JWT EST STOCKÉ EN CLAIR DANS LOCALSTORAGE:
+   - Acceptable pour dev/test
+   - En production: utiliser httpOnly cookies + CSRF protection
+   - Évite XSS attacks
+
+2. CORS CONFIGURÉ POUR DEV:
+   - Actuellement: permettre http://localhost:4200
+   - En production: configurer domain spécifique
+   - Vérifier SecurityConfig.java
+
+3. RÉPONSE LOGIN EST EN PLAIN TEXT:
+   - Backend retourne le token brut (pas de JSON wrapper)
+   - Frontend configure responseType: 'text' dans HttpClient.post()
+
+4. MODULE RESOLUTION BUNDLER:
+   - Changé de NodeNext pour compatibilité SSR
+   - module: ES2022 pour modules ES modernes
+
+5. DEBUGGUER:
+   - Ouvrir DevTools (F12)
+   - Console: voir les logs de debug
+   - Network: voir les requêtes HTTP/réponses
+   - Application: voir localStorage avec jwt_token
+
+
+CONTACTS ET SUPPORT:
+====================
+
+Pour des questions sur le code:
+- Consulter la doc DOCUMENTATION_FRONTEND.txt pour Angular
+- Consulter la doc DOCUMENTATION_BACKEND.txt pour Spring Boot
+- Vérifier les TODO et console.log() dans le code
+- Utiliser Git log pour voir les commits antérieurs
+
+
+================================================================================
+                        FIN DE LA DOCUMENTATION GÉNÉRALE
+================================================================================

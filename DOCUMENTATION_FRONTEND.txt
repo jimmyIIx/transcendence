@@ -1,0 +1,806 @@
+================================================================================
+                  DOCUMENTATION FRONTEND - ANGULAR 18+
+                        Avril 2026
+================================================================================
+
+TABLE DES MATIÈRES
+==================
+1. Introduction à l'architecture Frontend
+2. Dépendances et versions
+3. Modules clés du Frontend
+4. Composants
+5. Services
+6. Guards (Protection de routes)
+7. Configuration
+8. Styles et design
+9. Flux de données
+10. Comment continuer le développement
+
+
+1. INTRODUCTION À L'ARCHITECTURE FRONTEND
+==========================================
+
+Le Frontend est une application Angular 18+ avec:
+- Architecture modulaire et réactive
+- Authentification JWT sécurisée
+- Protection de routes avec guards
+- Gestion d'état avec services
+- Formulaires réactifs (reactive forms)
+- Styling SCSS
+- SSR (Server Side Rendering) configuré
+
+
+2. DÉPENDANCES ET VERSIONS
+===========================
+
+Vérifier package.json pour les versions exactes.
+
+VERSIONS CLÉS:
+- Angular: 18.x
+- TypeScript: 5.x
+- Node.js: v18+
+- RxJS: 7.x
+- FormsModule (Angular Forms) - intégré
+
+LANCER LES DÉPENDANCES:
+  npm install
+
+UPDATE DÉPENDANCES (PRUDENCE!):
+  npm update
+  ng update @angular/core @angular/cli
+
+
+3. MODULES CLÉS DU FRONTEND
+============================
+
+📁 src/app/
+│
+├── 📁 auth/ [Authentification]
+│   ├── 📁 login/
+│   │   ├── login.ts (Composant TypeScript)
+│   │   ├── login.html (Template HTML)
+│   │   └── login.scss (Styles)
+│   │
+│   └── 📁 register/
+│       ├── register.ts (Composant TypeScript)
+│       ├── register.html (Template HTML)
+│       └── register.scss (Styles)
+│
+├── 📁 guards/ [Protection Routes]
+│   └── auth-guard.ts (CanActivateFn - valide JWT avant accès)
+│
+├── 📁 services/ [Logique métier]
+│   ├── auth.ts (AuthService - gère requêtes HTTP auth)
+│   └── token.ts (TokenService - gère localStorage JWT)
+│
+├── 📁 dashboard/ [Page protégée]
+│   ├── dashboard.ts
+│   ├── dashboard.html
+│   └── dashboard.scss
+│
+├── app.ts (Composant racine)
+├── app.html (Template racine - contient <router-outlet/>)
+├── app.routes.ts (Configuration des routes)
+├── app.config.ts (Configuration Angular)
+├── app.scss (Styles globaux)
+└── app.spec.ts (Tests unitaires)
+
+
+4. COMPOSANTS PRINCIPAUX
+=========================
+
+A. LOGIN (src/app/auth/login/)
+─────────────────────────────
+
+Fichier: login.ts
+│
+├── Classe: Login
+│   ├── Properties:
+│   │   ├── username: string = '' [Nom d'utilisateur]
+│   │   ├── password: string = '' [Mot de passe]
+│   │   ├── loading: boolean = false [État du chargement]
+│   │   └── error: string | null = null [Messages d'erreur]
+│   │
+│   └── Méthodes:
+│       ├── onLogin(): void
+│       │   ├── Valide les inputs
+│       │   ├── Appelle authService.login()
+│       │   ├── Stocke le JWT
+│       │   └── Navigue vers /dashboard
+│       │
+│       └── navigateToRegister(): void [Navigue vers /register]
+│
+├── Selector: app-login
+├── Template: login.html (formulaire + error display)
+└── Styles: login.scss (gradient background + formulaire)
+
+FONCTIONNEMENT:
+1. Utilisateur remplit username + password
+2. Clique "Login"
+3. onLogin() valide: username ET password remplis
+4. this.loading = true (bouton désactivé)
+5. authService.login() effectue POST /auth/login
+6. Si succès: 
+   - Token reçu et sauvegardé dans localStorage
+   - Redirection vers /dashboard
+7. Si erreur:
+   - Message d'erreur affiché
+   - loading = false (bouton réactivé)
+
+
+B. REGISTER (src/app/auth/register/)
+────────────────────────────────────
+
+Fichier: register.ts
+│
+├── Classe: Register
+│   ├── Properties:
+│   │   ├── username: string = '' [Nom d'utilisateur]
+│   │   ├── email: string = '' [Adresse email]
+│   │   ├── password: string = '' [Mot de passe]
+│   │   ├── confirmPassword: string = '' [Confirmation]
+│   │   ├── loading: boolean = false
+│   │   └── error: string | null = null
+│   │
+│   └── Méthodes:
+│       ├── onRegister(): void
+│       │   ├── Valide TOUS les champs
+│       │   ├── Valide password === confirmPassword
+│       │   ├── Valide password.length >= 6
+│       │   ├── Appelle authService.register()
+│       │   └── Auto-login après succès
+│       │       └── Appelle authService.login() automatiquement
+│       │
+│       └── navigateToLogin(): void [Navigue vers /login]
+│
+├── Selector: app-register
+├── Template: register.html (formulaire 4 champs + error display)
+└── Styles: register.scss (gradient background + formulaire)
+
+VALIDATIONS:
+✓ Tous les champs requis
+✓ Email format valide (type="email" en HTML)
+✓ Mots de passe identiques
+✓ Minimum 6 caractères
+
+FLUX ENREGISTREMENT:
+1. Remplit tous les champs
+2. Clique "Register"
+3. Validations côté client
+4. POST /auth/register
+5. Si succès:
+   - Utilisateur créé en BD
+   - Auto-login avec les mêmes identifiants
+   - POST /auth/login
+   - Token sauvegardé
+   - Redirection /dashboard
+6. Si erreur: message affiché
+
+
+C. DASHBOARD (src/app/app/dashboard/)
+─────────────────────────────────────
+
+Fichier: dashboard.ts
+│
+├── Classe: Dashboard
+│   ├── onLogout(): void
+│   │   ├── Appelle authService.logout()
+│   │   ├── Supprime token de localStorage
+│   │   └── Navigue vers /login
+│
+├── Selector: app-dashboard
+├── Template: dashboard.html (accueil après auth)
+└── Styles: dashboard.scss
+
+ACCÈS:
+- Seulement si authGuard valide le JWT
+- Si on accède sans token → redirection /login
+- Boutton Logout pour se déconnecter
+
+
+5. SERVICES
+===========
+
+A. AuthService (src/app/services/auth.ts)
+─────────────────────────────────────────
+
+Gère TOUTE la communication HTTP avec le backend.
+
+Interface:
+│
+├── Propriété privée:
+│   └── apiUrl = 'http://localhost:8080/auth' [URL backend]
+│
+├── Méthodes principales:
+│   │
+│   ├── login(username: string, password: string)
+│   │   ├── POST /auth/login
+│   │   ├── Payload: { username, password }
+│   │   ├── ResponseType: 'text' [IMPORTANT: retour plain text JWT]
+│   │   └── Retourne: Observable<string> [Le JWT]
+│   │
+│   ├── register(username: string, email: string, password: string)
+│   │   ├── POST /auth/register
+│   │   ├── Payload: { username, email, password }
+│   │   ├── ResponseType: 'json' (par défaut)
+│   │   └── Retourne: Observable<any> [Objet User]
+│   │
+│   ├── saveToken(token: string): void
+│   │   └── Appelle tokenService.setToken(token)
+│   │
+│   ├── logout(): void
+│   │   ├── Appelle tokenService.removeToken()
+│   │   └── Navigue vers /login
+│   │
+│   └── isAuthenticated(): boolean
+│       └── Retourne tokenService.hasToken()
+
+EXEMPLE D'UTILISATION DANS UN COMPOSANT:
+```
+this.authService.login(username, password).subscribe({
+  next: (token) => {
+    this.authService.saveToken(token);
+    this.router.navigate(['/dashboard']);
+  },
+  error: (err) => {
+    this.error = err.error?.message || 'Login failed';
+  }
+});
+```
+
+DÉTAILS TECHNIQUES:
+- Utilise HttpClient de Angular
+- Les requêtes utilisent POST
+- Retourne un Observable (pattern RxJS)
+- S'abonn avec .subscribe({ next: ..., error: ... })
+
+
+B. TokenService (src/app/services/token.ts)
+───────────────────────────────────────────
+
+Gère le JWT dans localStorage du navigateur.
+
+Interface:
+│
+├── Propriété privée:
+│   └── TOKEN_KEY = 'jwt_token' [Clé localStorage]
+│
+├── Méthodes:
+│   │
+│   ├── setToken(token: string): void
+│   │   └── localStorage.setItem('jwt_token', token)
+│   │
+│   ├── getToken(): string | null
+│   │   └── Retourne localStorage.getItem('jwt_token') ou null
+│   │
+│   ├── hasToken(): boolean
+│   │   └── Retourne !!this.getToken() [true si token existe]
+│   │
+│   ├── isTokenValid(): boolean
+│   │   └── Retourne token existe ET n'est pas vide
+│   │       (utilisé par authGuard)
+│   │
+│   └── removeToken(): void
+│       └── localStorage.removeItem('jwt_token')
+
+EXEMPLE D'UTILISATION:
+```
+// Sauvegarder
+const token = 'eyJhbGciOiJIUzI1NiJ9...';
+this.tokenService.setToken(token);
+
+// Récupérer
+const token = this.tokenService.getToken();
+
+// Vérifier
+if (this.tokenService.isTokenValid()) {
+  // L'utilisateur est connecté
+}
+
+// Supprimer (logout)
+this.tokenService.removeToken();
+```
+
+STOCKAGE:
+- localStorage est persistant (reste après fermeture navigateur)
+- Accessible uniquement depuis JavaScript (pas httpOnly)
+- À protéger contre XSS en production
+
+
+6. GUARDS (PROTECTION DE ROUTES)
+=================================
+
+Fichier: src/app/guards/auth-guard.ts
+
+Guard Type: CanActivateFn (fonctionnel - approche moderne Angular)
+
+FONCTION:
+export const authGuard: CanActivateFn = (route, state) => {
+  const tokenService = inject(TokenService);
+  const router = inject(Router);
+
+  // 1. Vérifie si token existe et est valide
+  if (tokenService.isTokenValid()) {
+    return true; // Accès autorisé
+  }
+
+  // 2. Token invalide - redirection
+  router.navigate(['/login']);
+  return false; // Accès refusé
+};
+
+UTILISATION DANS app.routes.ts:
+```
+{
+  path: 'dashboard',
+  component: Dashboard,
+  canActivate: [authGuard]  // Guard appliqué à cette route
+}
+```
+
+FLUX:
+1. Utilisateur tente d'accéder à /dashboard
+2. Angular exécute authGuard avant de charger le composant
+3. Guard appelle tokenService.isTokenValid()
+4. Si true: composant Dashboard chargé normalement
+5. Si false: redirection vers /login, Dashboard pas affiché
+
+
+7. CONFIGURATION
+================
+
+A. app.routes.ts (Configuration des routes)
+────────────────────────────────────────────
+
+Définit le routage de l'application:
+
+const routes: Routes = [
+  { 
+    path: '', 
+    redirectTo: 'login', 
+    pathMatch: 'full' 
+  },
+  { 
+    path: 'login', 
+    component: Login 
+  },
+  { 
+    path: 'register', 
+    component: Register 
+  },
+  { 
+    path: 'dashboard', 
+    component: Dashboard, 
+    canActivate: [authGuard]  // PROTECTED!
+  },
+  { 
+    path: '**', 
+    redirectTo: 'login' 
+  }
+];
+
+EXPLICATIONS:
+- Accès '' → redirige vers /login
+- /login: page de connexion (accès public)
+- /register: page d'inscription (accès public)
+- /dashboard: page protégée (nécessite authGuard + token valide)
+- '**' (any): redirige vers /login (fallback)
+
+
+B. app.config.ts (Configuration Angular)
+─────────────────────────────────────────
+
+Fournit les services et configuration à toute l'app:
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),           // Fournit routeur
+    provideHttpClient(),             // Fournit HttpClient
+    provideClientHydration()         // SSR hydration
+  ],
+};
+
+Détails:
+- provideRouter: enable routing
+- provideHttpClient: HttpClient injectable
+- provideClientHydration: Angular Universal support (SSR)
+
+
+C. tsconfig.json (Configuration TypeScript)
+──────────────────────────────────────────
+
+OPTIONS CLÉS:
+{
+  "compilerOptions": {
+    "module": "ES2022",              // Output ES modules, pas CommonJS
+    "moduleResolution": "bundler",   // Pour bundler (Webpack/Vite)
+    "target": "ES2022",              // JavaScript cible
+    "forceConsistentCasingInFileNames": true,  // Cross-OS
+    "allowSyntheticDefaultImports": true,  // Express default imports
+    "rootDir": "./src"               // Répertoire source
+  }
+}
+
+IMPORTANT:
+- "module": "ES2022" (pas NodeNext) - pour SSR
+- "moduleResolution": "bundler" - pour Angular bundler
+
+
+8. STYLES ET DESIGN
+===================
+
+A. Structure des styles
+──────────────────────
+
+- styles.scss: styles globaux (src/)
+- app.scss: styles du composant racine
+- login.scss: styles page login
+- register.scss: styles page register
+- dashboard.scss: styles page dashboard
+
+B. Login/Register Design
+────────────────────────
+
+BACKGROUND:
+- Image: public/background.jpg
+- CSS: background: url('/background.jpg') center/cover no-repeat;
+
+CARD LAYOUT:
+- Centré horizontalement et verticalement
+- min-height: 100vh (plein écran)
+- Card blanche: white background, rounded corners, shadow
+
+FORMULAIRE:
+- Champs alignés verticalement (flex column)
+- Labels + inputs
+- Boutton gradient
+- Lien vers autre page
+
+RESPONSIVE:
+- Max-width: 400-450px
+- Padding: 20px pour mobile
+- Font sizes adaptés
+
+C. Themes/Gradients
+──────────────────
+
+LOGIN (login.scss):
+- Gradient: #667eea (bleu) → #764ba2 (violet)
+- Primary color: #667eea
+
+REGISTER (register.scss):
+- Gradient: #f093fb (rose) → #f5576c (rouge)
+- Primary color: #f5576c
+
+INPUTS:
+- Border on focus: primary color
+- Box-shadow: light primary color (0 0 0 3px rgba)
+- Placeholder: gris clair
+
+BOUTTON:
+- Background: gradient (login/register)
+- Hover: transform translateY(-2px) + shadow
+- Disabled: opacity 0.6
+
+
+9. FLUX DE DONNÉES
+==================
+
+A. Flux Login
+─────────────
+
+┌─────────────────────────────────────────────────────────┐
+│ Utilisateur ouvre http://localhost:4200                │
+│ (redirige automatiquement vers /login)                 │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────┐
+│ Composant Login charge                                 │
+│ - Form avec username + password                       │
+│ - Boutton "Login"                                      │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────┐
+│ Utilisateur remplit et clique Login                   │
+│ onLogin() exécuté                                      │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────┐
+│ Validation locale:                                     │
+│ ✓ username rempli?                                     │
+│ ✓ password rempli?                                    │
+│ Si non → error message                                 │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────┐
+│ loading = true                                          │
+│ Boutton désactivé, texte "Logging in..."              │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────┐
+│ POST /auth/login                                       │
+│ {username: "Djomino06", password: "pass123"}          │
+│ (via AuthService.login())                             │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+                ┌──────┴──────┐
+                │             │
+         ┌──────▼──┐   ┌─────▼────────┐
+         │ SUCCESS │   │ ERROR        │
+         └──────┬──┘   └─────┬────────┘
+                │             │
+        ┌───────▼──────┐    ┌─▼───────────────┐
+        │ Backend OK   │    │ Backend erreur  │
+        │ Retourne JWT │    │ (invalid creds?)│
+        └───────┬──────┘    └─┬───────────────┘
+                │             │
+        ┌───────▼──────────┐  │
+        │ JWT stocké       │  │
+        │ localStorage:    │  │
+        │ "jwt_token"      │  │
+        └───────┬──────────┘  │
+                │             │
+        ┌───────▼──────────┐  │
+        │ Navigate /dash   │  │
+        │ Redirection      │  │
+        └───────┬──────────┘  │
+                │             │
+        ┌───────▼──────────┐  │
+        │ authGuard vérifie│  │
+        │ Token existe? OUI│  │
+        │ Accès autorisé   │  │
+        └─────────────────┘  │
+                             │
+                      ┌──────▼──────────┐
+                      │ loading = false  │
+                      │ error message   │
+                      │ Boutton activé  │
+                      └─────────────────┘
+
+
+B. Flux Protect Route
+─────────────────────
+
+┌──────────────────────────────────────────┐
+│ Utilisateur visite /dashboard            │
+└──────────────────┬───────────────────────┘
+                   │
+┌──────────────────▼───────────────────────┐
+│ Angular Router vérifie canActivate       │
+│ Exécute authGuard                        │
+└──────────────────┬───────────────────────┘
+                   │
+        ┌──────────┴──────────┐
+        │                     │
+    ┌───▼────┐         ┌─────▼──┐
+    │ TOKEN  │         │ NO     │
+    │ VALIDE │         │ TOKEN  │
+    └───┬────┘         └─────┬──┘
+        │                   │
+    ┌───▼──────────────┐  ┌──▼─────────────┐
+    │ authGuard        │  │ authGuard       │
+    │ return true      │  │ navigate /login │
+    └───┬──────────────┘  │ return false    │
+        │                 └──────┬─────────┘
+        │                        │
+    ┌───▼──────────────┐      ┌──▼──────────┐
+    │ Route activée    │      │ Route bloc  │
+    │ Dashboard        │      │ Redirection │
+    │ composant        │      │ Login       │
+    │ chargé           │      │ effectuée   │
+    └─────────────────┘      └─────────────┘
+
+
+10. COMMENT CONTINUER LE DÉVELOPPEMENT
+========================================
+
+A. Ajouter une nouvelle page
+─────────────────────────────
+
+1. Générer composant:
+   ng generate component nom-composant
+   
+2. Créer template (nom-composant.html):
+   <div class="container">
+     <h1>Mon Page</h1>
+   </div>
+
+3. Ajouter styles (nom-composant.scss):
+   .container {
+     padding: 20px;
+   }
+
+4. Ajouter route dans app.routes.ts:
+   {
+     path: 'mon-page',
+     component: NomComposant,
+     canActivate: [authGuard]  // Si besoin protection
+   }
+
+5. Import dans app.ts pour SSR
+
+
+B. Ajouter une new route protégée
+──────────────────────────────────
+
+1. Créer composant
+2. Ajouter route avec canActivate: [authGuard]
+3. Accès automatiquement protégé
+
+EXEMPLE:
+{
+  path: 'profile',
+  component: ProfileComponent,
+  canActivate: [authGuard]
+}
+
+
+C. Modifier le backend API
+───────────────────────────
+
+1. Si URL backend change: modifier src/app/services/auth.ts
+   private apiUrl = 'http://localhost:8080/auth';
+
+2. Si réponse JWT change: modifier src/app/services/auth.ts
+   login(): return this.http.post(..., { responseType: 'text' });
+   (ou 'json' si réponse est { token: string })
+
+3. Si endpoints changent: 
+   - Mettre à jour URLs dans AuthService
+   - Tester dans console (F12 Network tab)
+
+
+D. Ajouter interceptor HTTP pour JWT
+─────────────────────────────────────
+
+EN PRODUCTION, inclure JWT dans CHAQUE requête:
+
+Créer: src/app/interceptors/auth.interceptor.ts
+
+```
+import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+export class AuthInterceptor implements HttpInterceptor {
+  constructor(private tokenService: TokenService) {}
+
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const token = this.tokenService.getToken();
+    
+    if (token) {
+      req = req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    }
+    
+    return next.handle(req);
+  }
+}
+```
+
+Puis enregistrer dans app.config.ts:
+```
+provideHttpClient(
+  withInterceptors([authInterceptor])
+)
+```
+
+
+E. Ajouter tests unitaires
+──────────────────────────
+
+Fichiers spec.ts existent déjà.
+
+Exemple test LoginComponent:
+
+```
+describe('LoginComponent', () => {
+  let component: Login;
+  let fixture: ComponentFixture<Login>;
+  let authService: jasmine.SpyObj<AuthService>;
+
+  beforeEach(async () => {
+    const authServiceSpy = jasmine.createSpyObj('AuthService', ['login']);
+    
+    await TestBed.configureTestingModule({
+      imports: [Login],
+      providers: [{provide: AuthService, useValue: authServiceSpy}]
+    }).compileComponents();
+
+    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+    fixture = TestBed.createComponent(Login);
+    component = fixture.componentInstance;
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('should validate empty inputs', () => {
+    component.onLogin();
+    expect(component.error).toBeTruthy();
+  });
+});
+```
+
+Lancer les tests:
+  ng test
+
+
+F. Déployer en production
+──────────────────────────
+
+1. Build optimisé:
+   ng build --configuration production
+
+2. Folder: dist/42bets-frontend/browser
+
+3. Servir avec nginx ou autre web server
+
+4. Configurer backend URL en production
+   (environment.ts, environment.prod.ts)
+
+5. Activer HTTPS
+6. Configurer cookies httpOnly
+7. Protéger contre CSRF
+
+
+COMMON ERRORS ET SOLUTIONS
+===========================
+
+ERREUR: "Cannot find module 'auth.ts'"
+SOLUTION: Vérifier les imports
+  import { AuthService } from '../../services/auth';
+
+ERREUR: "Type 'Observable' requires 1 type argument"
+SOLUTION: Observable<type>
+  Observable<string> ou Observable<any>
+
+ERREUR: "RouterLink not used in template"
+SOLUTION: Ou ajouter routerLink dans HTML, ou supprimer import
+
+ERREUR: CORS error 401 / 403
+SOLUTION: Vérifier backend CORS config (SecurityConfig.java)
+
+ERREUR: "Cannot read property 'setItem' of undefined"
+SOLUTION: localStorage pas disponible (check SSR context)
+
+ERREUR: Token jamais décodé / utilisé
+SOLUTION: Ajouter interceptor pour inclure dans chaque requête
+
+
+FICHIERS IMPORTANTS À CONNAÎTRE
+================================
+
+Fichiers à lire pour comprendre l'architecture:
+□ src/app/app.ts - point d'entrée app
+□ src/app/app.routes.ts - configuration routes
+□ src/app/guards/auth-guard.ts - protection routes
+□ src/app/services/auth.ts - API requests
+□ src/app/services/token.ts - localStorage management
+□ src/app/auth/login/login.ts - composant login
+□ src/app/auth/register/register.ts - composant register
+
+
+RESSOURCES UTILES
+=================
+
+Documentation Angular: https://angular.dev
+RxJS Observables: https://rxjs.dev
+JWT.io: https://jwt.io (décoder tokens)
+Angular Security: https://angular.io/guide/security
+
+Commandes Angular utiles:
+  ng serve           - dev server
+  ng build           - build prod
+  ng test            - tests
+  ng generate        - générer composants/services
+  ng lint            - vérifier code
+  ng update          - update Angular
+
+
+================================================================================
+                        FIN DE LA DOCUMENTATION FRONTEND
+================================================================================

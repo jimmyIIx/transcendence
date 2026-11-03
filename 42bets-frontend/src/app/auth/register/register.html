@@ -1,0 +1,112 @@
+<div class="register-container" [class.register-container-modal]="modalMode">
+  <div class="register-card card-surface">
+    <div class="register-logo-wrap">
+      <img src="/42bet-cropped.png" alt="42Bets" class="register-logo" />
+    </div>
+
+    <form (ngSubmit)="onRegister()">
+      <div class="form-group">
+        <input
+          class="form-input-dark form-input-slate"
+          id="username"
+          type="text"
+          [(ngModel)]="username"
+          name="username"
+          [attr.aria-label]="'REGISTER.USERNAME_ARIA' | translate"
+          [placeholder]="'REGISTER.USERNAME_PLACEHOLDER' | translate"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <input
+          class="form-input-dark form-input-slate"
+          id="email"
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          [attr.aria-label]="'REGISTER.EMAIL_ARIA' | translate"
+          [placeholder]="'REGISTER.EMAIL_PLACEHOLDER' | translate"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <input
+          class="form-input-dark form-input-slate"
+          id="password"
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          [attr.aria-label]="'REGISTER.PASSWORD_ARIA' | translate"
+          [placeholder]="'REGISTER.PASSWORD_PLACEHOLDER' | translate"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <input
+          class="form-input-dark form-input-slate"
+          id="confirmPassword"
+          type="password"
+          [(ngModel)]="confirmPassword"
+          name="confirmPassword"
+          [attr.aria-label]="'REGISTER.CONFIRM_ARIA' | translate"
+          [placeholder]="'REGISTER.CONFIRM_PLACEHOLDER' | translate"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn-primary register-submit" [disabled]="loading">
+        {{ loading ? ('REGISTER.BTN_SUBMITTING' | translate) : ('REGISTER.BTN_SUBMIT' | translate) }}
+      </button>
+    </form>
+
+    <!-- OAuth2 Register Options -->
+    <div class="oauth2-divider">
+      <span>{{ 'REGISTER.OR' | translate }}</span>
+    </div>
+
+    <div class="oauth2-buttons">
+      <a [href]="oauth42Url" class="oauth-btn oauth-42" [title]="'REGISTER.OAUTH_42_TITLE' | translate" [attr.aria-label]="'REGISTER.OAUTH_42_ARIA' | translate">
+        <img
+          class="oauth-logo oauth-logo-42"
+          src="/42school.svg"
+          alt="42 logo"
+          loading="lazy"
+          decoding="async"
+        />
+      </a>
+      <a
+        [href]="oauthGithubUrl"
+        class="oauth-btn oauth-github"
+        [title]="'REGISTER.OAUTH_GITHUB_TITLE' | translate"
+        [attr.aria-label]="'REGISTER.OAUTH_GITHUB_ARIA' | translate"
+      >
+        <img
+          class="oauth-logo oauth-logo-github"
+          src="/github.svg"
+          alt="GitHub logo"
+          loading="lazy"
+          decoding="async"
+        />
+      </a>
+    </div>
+
+    <p class="login-link">
+      {{ 'REGISTER.HAS_ACCOUNT' | translate }}
+      <a href="#" (click)="onLoginLinkClicked($event)">{{ 'REGISTER.LOGIN_LINK' | translate }}</a>
+    </p>
+  </div>
+</div>
+
+<app-error-model [isOpen]="errorModalOpen" [message]="errorMessage" source="register" (closed)="closeErrorModal()">
+</app-error-model>
+
+<app-success-modal
+  [isOpen]="successModalOpen"
+  [message]="successMessage"
+  source="register"
+  (closed)="closeSuccessModal()"
+>
+</app-success-modal>
